@@ -15,7 +15,7 @@ final class HarnessgramOfflineAccountTests: XCTestCase {
         let wal = directory.appendingPathComponent("account/postbox/db/db_sqlite-wal")
         let opened = expectation(description: "offline account opened")
         let disposable = HarnessgramDemoSeed.openOfflineAccount(directory: directory).start(next: { chats in
-            XCTAssertEqual(chats?.map(\.title), ["גשר", "פינת הקריאה", "גלריית הכיתה"])
+            XCTAssertEqual(chats?.map(\.title), ["גשר", "פינת הקריאה", "גלריית הכיתה", "אתר החנות", "מסלול הלמידה", "תדריך הבוקר", "לוח המשימות", "רדיו הצוות"])
             XCTAssertTrue(chats?.allSatisfy { !$0.message.isEmpty } == true)
             XCTAssertFalse(FileManager.default.fileExists(atPath: wal.path), "The database must be closed before delivering the chats.")
             opened.fulfill()

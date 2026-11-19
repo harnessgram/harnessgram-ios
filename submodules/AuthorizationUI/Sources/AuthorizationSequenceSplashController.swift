@@ -30,6 +30,10 @@ public final class AuthorizationSequenceSplashController: ViewController {
     private let activateLocalizationDisposable = MetaDisposable()
     
     private let startButton: SolidRoundedButtonNode
+
+    #if targetEnvironment(simulator)
+    private static var didOpenSampleOnLaunch = false
+    #endif
     
     init(accountManager: AccountManager<TelegramAccountManagerTypes>, account: UnauthorizedAccount, theme: PresentationTheme, openSample: (() -> Void)?) {
         self.accountManager = accountManager
@@ -203,6 +207,21 @@ public final class AuthorizationSequenceSplashController: ViewController {
         super.viewDidAppear(animated)
         
         controller.viewDidAppear(animated)
+
+        #if targetEnvironment(simulator)
+        if CommandLine.arguments.contains("--harnessgram-sample") {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !Self.didOpenSampleOnLaunch, self.viewIfLoaded?.window != nil,
+                      self.navigationController?.viewControllers.last === self, self.controller.isEnabled,
+                      let button = self.controller.secondaryStartButton as? UIButton else {
+                    return
+                }
+                Self.didOpenSampleOnLaunch = true
+                NSLog("[HarnessgramSimDemo] opening sample")
+                button.sendActions(for: .touchUpInside)
+            }
+        }
+        #endif
     }
     
     public override func viewWillDisappear(_ animated: Bool) {

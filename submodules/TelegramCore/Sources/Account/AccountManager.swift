@@ -276,6 +276,16 @@ public func performAppGroupUpgrades(appGroupPath: String, rootPath: String) {
                 guard let url = url as? URL else {
                     continue
                 }
+                // An extension can run this cleanup while the app shows the offline sample (any build) or seeds the
+                // simulator demo: never delete either folder from here.
+                if url.lastPathComponent == "harnessgram-offline-sample" {
+                    continue
+                }
+                #if targetEnvironment(simulator)
+                if url.lastPathComponent == "telegram-harnessgram-demo" {
+                    continue
+                }
+                #endif
                 if let isDirectory = try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory, isDirectory {
                     if !allowedDirectories.contains(url.lastPathComponent) {
                         let _ = try? FileManager.default.removeItem(at: url)

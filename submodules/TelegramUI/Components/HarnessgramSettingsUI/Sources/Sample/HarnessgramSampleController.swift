@@ -1,4 +1,5 @@
 import ActivityKit
+import Foundation
 import HarnessgramAgent
 import HarnessgramCockpitKit
 import HarnessgramSettings
@@ -6,6 +7,31 @@ import SwiftUI
 import TelegramCore
 import UIKit
 import WidgetKit
+
+#if targetEnvironment(simulator)
+private let sampleScreenshotPrefersHebrew: Bool = {
+    if ProcessInfo.processInfo.environment["HARNESSGRAM_DEMO_LANGUAGE"] == "he" {
+        return true
+    }
+    let languages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? Locale.preferredLanguages
+    return languages.first?.lowercased().split(whereSeparator: { $0 == "-" || $0 == "_" }).first == "he"
+}()
+
+private enum SampleScreenshotPage: Hashable {
+    case messages, waiting, decision, settings, appSettings, filter
+
+    static var launchPath: [Self] {
+        switch ProcessInfo.processInfo.environment["HARNESSGRAM_SAMPLE_STEP"] {
+        case "home": return [.messages]
+        case "decision": return [.waiting, .decision]
+        case "filter": return [.settings, .appSettings, .filter]
+        case "settings": return [.settings, .appSettings]
+        case "cockpit": return []
+        default: return []
+        }
+    }
+}
+#endif
 
 @MainActor
 public func harnessgramSampleOpenError() -> UIAlertController {
@@ -125,13 +151,23 @@ private struct SampleHeadingView: View {
         self.heading = heading
     }
 
+    private var showsEnglish: Bool {
+        #if targetEnvironment(simulator)
+        return !sampleScreenshotPrefersHebrew
+        #else
+        return true
+        #endif
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(self.heading.hebrew)
-            Text(self.heading.english)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .environment(\.layoutDirection, .leftToRight)
+            if self.showsEnglish {
+                Text(self.heading.english)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .environment(\.layoutDirection, .leftToRight)
+            }
         }
         .accessibilityElement(children: .combine)
     }
@@ -141,7 +177,32 @@ private struct SampleHeadingView: View {
 private struct HarnessgramSampleView: View {
     @ObservedObject var model: HarnessgramSampleModel
 
+    #if targetEnvironment(simulator)
+    @Environment(\.locale) private var locale
+    @State private var screenshotPath: [SampleScreenshotPage]
+    private let screenshotPage: SampleScreenshotPage?
+    private let screenshotDecision: HarnessgramCockpitSnapshot.Decision?
+    #endif
+
+    init(model: HarnessgramSampleModel) {
+        self.model = model
+        #if targetEnvironment(simulator)
+        let path = SampleScreenshotPage.launchPath
+        self._screenshotPath = State(initialValue: path)
+        self.screenshotPage = path.last
+        self.screenshotDecision = model.state.snapshot.decisions.first
+        #endif
+    }
+
     var body: some View {
+        #if targetEnvironment(simulator)
+        self.content.environment(\.locale, sampleScreenshotPrefersHebrew ? Locale(identifier: "he") : self.locale)
+        #else
+        self.content
+        #endif
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             HStack {
                 Label {
@@ -158,11 +219,7 @@ private struct HarnessgramSampleView: View {
             .padding(.horizontal, 16)
             .background(.regularMaterial)
             Divider()
-            NavigationView {
-                self.cockpit
-            }
-            .navigationViewStyle(.stack)
-            .disabled(self.model.exiting)
+            self.navigation.disabled(self.model.exiting)
         }
         .environment(\.layoutDirection, .rightToLeft)
         .alert(self.model.error ?? "", isPresented: Binding(
@@ -170,6 +227,53 @@ private struct HarnessgramSampleView: View {
             set: { if !$0 { self.model.error = nil } }
         )) { Button(SampleBannerStrings.ok, role: .cancel) {} }
     }
+
+    @ViewBuilder
+    private var navigation: some View {
+        #if targetEnvironment(simulator)
+        if let screenshotPage = self.screenshotPage {
+            if #available(iOS 16.0, *) {
+                // Install the same back stack a visitor would get by tapping through the sample.
+                NavigationStack(path: self.$screenshotPath) {
+                    self.cockpit.navigationDestination(for: SampleScreenshotPage.self) { page in
+                        self.screenshotDestination(page)
+                    }
+                }
+            } else {
+                NavigationView { self.screenshotDestination(screenshotPage) }
+                    .navigationViewStyle(.stack)
+            }
+        } else {
+            self.cockpitNavigation
+        }
+        #else
+        self.cockpitNavigation
+        #endif
+    }
+
+    private var cockpitNavigation: some View {
+        NavigationView { self.cockpit }
+            .navigationViewStyle(.stack)
+    }
+
+    #if targetEnvironment(simulator)
+    @ViewBuilder
+    private func screenshotDestination(_ page: SampleScreenshotPage) -> some View {
+        switch page {
+        case .messages: self.messages()
+        case .waiting: self.waiting
+        case .decision:
+            if let decision = self.screenshotDecision {
+                self.decisionPage(decision)
+            } else {
+                self.waiting
+            }
+        case .settings: self.settings
+        case .appSettings: self.appSettings
+        case .filter: self.filter
+        }
+    }
+    #endif
 
     private var cockpit: some View {
         List {
@@ -225,7 +329,7 @@ private struct HarnessgramSampleView: View {
                 }
                 ForEach(self.model.state.snapshot.decisions) { decision in
                     NavigationLink {
-                        SampleDecisionView(decision: decision, model: self.model, messages: self.messages(topic: decision.topic))
+                        self.decisionPage(decision)
                     } label: {
                         Label(decision.title, systemImage: decision.sensitive ? "lock.fill" : "doc.text")
                     }
@@ -234,6 +338,10 @@ private struct HarnessgramSampleView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .principal) { SampleHeadingView(SampleCockpitStrings.waiting) } }
+    }
+
+    private func decisionPage(_ decision: HarnessgramCockpitSnapshot.Decision) -> some View {
+        SampleDecisionView(decision: decision, model: self.model, messages: self.messages(topic: decision.topic))
     }
 
     private func messages(topic: String? = nil) -> some View {

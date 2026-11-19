@@ -33,8 +33,12 @@ def device_lines(source):
 class SampleReleaseGuards(unittest.TestCase):
     def test_no_screenshot_switch_can_compile_into_device_build(self):
         sources = set(SUBMODULES.glob("**/Harnessgram*.swift"))
-        sources.add(SUBMODULES / "TelegramUI/Sources/AppDelegate.swift")
-        switch = re.compile(r"HARNESSGRAM_DEMO_[A-Z_]+|--harnessgram-(?:demo|test-dc)")
+        sources.update({
+            SUBMODULES / "AuthorizationUI/Sources/AuthorizationSampleStrings.swift",
+            SUBMODULES / "AuthorizationUI/Sources/AuthorizationSequenceSplashController.swift",
+            SUBMODULES / "TelegramUI/Sources/AppDelegate.swift",
+        })
+        switch = re.compile(r"HARNESSGRAM_DEMO_[A-Z_]+|HARNESSGRAM_SAMPLE_STEP|--harnessgram-(?:demo|test-dc|sample)")
         guarded_files = set()
         for path in sorted(sources):
             if "Tests" in path.parts:
@@ -46,6 +50,9 @@ class SampleReleaseGuards(unittest.TestCase):
             with self.subTest(file=path.name):
                 self.assertNotRegex("\n".join(device_lines(source)), switch)
         self.assertIn("HarnessgramSimDemo.swift", guarded_files)
+        self.assertIn("HarnessgramSampleController.swift", guarded_files)
+        self.assertIn("AuthorizationSampleStrings.swift", guarded_files)
+        self.assertIn("AuthorizationSequenceSplashController.swift", guarded_files)
         self.assertIn("AppDelegate.swift", guarded_files)
 
     def test_entry_only_uses_the_offline_account_constructor(self):

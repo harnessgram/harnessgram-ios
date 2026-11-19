@@ -418,8 +418,12 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
 
     private func syncAtomicStateToFile() {
         if let data = try? JSONEncoder().encode(self.currentAtomicState) {
-            if let _ = try? data.write(to: URL(fileURLWithPath: self.atomicStatePath), options: [.atomic]) {
-            } else {
+            do {
+                try data.write(to: URL(fileURLWithPath: self.atomicStatePath), options: [.atomic])
+            } catch {
+                #if targetEnvironment(simulator)
+                postboxLog("AccountManager: could not write atomic state: \(error)")
+                #endif
                 postboxLogSync()
                 preconditionFailure()
             }
