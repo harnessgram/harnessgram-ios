@@ -1,4 +1,5 @@
 import Foundation
+import HarnessgramSettings
 import Postbox
 import MtProtoKit
 import SwiftSignalKit
@@ -30,6 +31,9 @@ public enum SendStarGiftOfferError {
 }
 
 func _internal_sendStarGiftOffer(account: Account, peerId: EnginePeer.Id, slug: String, amount: CurrencyAmount, duration: Int32, allowPaidStars: Int64?) -> Signal<Never, SendStarGiftOfferError> {
+    guard HarnessgramSettings.allowsTelegramPurchases() else {
+        return .fail(.generic)
+    }
     var flags: Int32 = 0
     if let _ = allowPaidStars {
         flags |= (1 << 0)

@@ -9,6 +9,7 @@ import HarnessgramSettingsUI
 import HarnessgramCockpitSync
 import HarnessgramHouseUI
 
+#if targetEnvironment(simulator)
 /// Simulator only: drives the House screens for the logged-in screenshot gate (no taps needed). Launch with
 /// HARNESSGRAM_DEMO_STEP = theme | radio | knock (knock also needs HARNESSGRAM_DEMO_HOUSE=1). Made-up data only;
 /// a device build compiles it out. Build 23: HARNESSGRAM_DEMO_THEME = a Harnessgram theme's raw value (cockpitNight,
@@ -42,7 +43,6 @@ final class HarnessgramSimDemo {
     }
 
     func start(context: AccountContext, navigationController: NavigationController) {
-        #if targetEnvironment(simulator)
         guard !self.started, let step = ProcessInfo.processInfo.environment["HARNESSGRAM_DEMO_STEP"] else {
             return
         }
@@ -203,6 +203,6 @@ final class HarnessgramSimDemo {
         default:
             break
         }
-        #endif
     }
 }
+#endif

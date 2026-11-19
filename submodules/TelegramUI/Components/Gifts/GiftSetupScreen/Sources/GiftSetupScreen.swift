@@ -708,7 +708,7 @@ private final class GiftSetupScreenComponent: Component {
                     guard let self, let component = self.component, let controller = self.environment?.controller() else {
                         return
                     }
-                    let purchaseController = component.context.sharedContext.makeStarsPurchaseScreen(
+                    guard let purchaseController = component.context.sharedContext.makeStarsPurchaseScreen(
                         context: component.context,
                         starsContext: starsContext,
                         options: options ?? [],
@@ -728,7 +728,9 @@ private final class GiftSetupScreenComponent: Component {
                                 proceed()
                             })
                         }
-                    )
+                    ) else {
+                        return
+                    }
                     controller.push(purchaseController)
                 })
             } else {
@@ -1530,11 +1532,13 @@ private final class GiftSetupScreenComponent: Component {
                                         guard let self, let component = self.component, let controller = environment.controller() else {
                                             return
                                         }
-                                        let storeController = component.context.sharedContext.makeGiftStoreController(
+                                        guard let storeController = component.context.sharedContext.makeGiftStoreController(
                                             context: component.context,
                                             peerId: component.peerId,
                                             gift: starGift
-                                        )
+                                        ) else {
+                                            return
+                                        }
                                         controller.push(storeController)
                                     }
                                 )))
@@ -1612,9 +1616,11 @@ private final class GiftSetupScreenComponent: Component {
                                     |> filter { $0 != nil }
                                     |> take(1)
                                     |> deliverOnMainQueue).startStandalone(next: { options in
-                                        let purchaseController = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options ?? [], purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { stars in
+                                        guard let purchaseController = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options ?? [], purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { stars in
                                             starsContext.add(balance: StarsAmount(value: stars, nanos: 0))
-                                        })
+                                        }) else {
+                                            return
+                                        }
                                         controller.push(purchaseController)
                                     })
                                 }

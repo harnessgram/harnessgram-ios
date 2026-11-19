@@ -1455,7 +1455,7 @@ private final class ChatSendStarsScreenComponent: Component {
                                 let _ = (context.engine.payments.starsTopUpOptions()
                                          |> take(1)
                                          |> deliverOnMainQueue).startStandalone(next: { options in
-                                    let controller = context.sharedContext.makeStarsPurchaseScreen(
+                                    guard let controller = context.sharedContext.makeStarsPurchaseScreen(
                                         context: context,
                                         starsContext: starsContext,
                                         options: options,
@@ -1463,7 +1463,9 @@ private final class ChatSendStarsScreenComponent: Component {
                                         targetPeerId: targetPeerId,
                                         customTheme: customTheme,
                                         completion: { _ in }
-                                    )
+                                    ) else {
+                                        return
+                                    }
                                     navigationController.pushViewController(controller)
                                 })
                             }
@@ -2606,10 +2608,12 @@ private final class ChatSendStarsScreenComponent: Component {
                                     purchasePurpose = .reactions(peerId: liveStreamMessageData.peer.id, requiredStars: Int64(self.amount.realValue))
                                 }
                                 
-                                let purchaseScreen = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options, purpose: purchasePurpose, targetPeerId: nil, customTheme: environment.theme, completion: { result in
+                                guard let purchaseScreen = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options, purpose: purchasePurpose, targetPeerId: nil, customTheme: environment.theme, completion: { result in
                                     let _ = result
                                     //TODO:release
-                                })
+                                }) else {
+                                    return
+                                }
                                 self.environment?.controller()?.push(purchaseScreen)
                                 self.environment?.controller()?.dismiss()
                             })

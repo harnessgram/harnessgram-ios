@@ -23,6 +23,7 @@ final class HarnessgramFilterModel: ObservableObject {
 
     /// Set by the controller: Telegram's alert with one OK button.
     var presentNotice: ((String) -> Void)?
+    var openAccountPrivacy: (() -> Void)?
     /// Set by the controller: the short warning before Face ID (personal off only); `confirm` runs on "כיבוי".
     var presentOffWarning: ((HarnessgramFilterRule, @escaping () -> Void, @escaping () -> Void) -> Void)?
 
@@ -95,6 +96,13 @@ struct HarnessgramFilterView: View {
 
     var body: some View {
         Form {
+            Section {
+                Button {
+                    self.model.openAccountPrivacy?()
+                } label: {
+                    HarnessgramSettingsRowLabel(title: HarnessgramAccountPrivacyStrings.title, detail: HarnessgramAccountPrivacyStrings.settingsDetail)
+                }
+            }
             Section(header: Text(self.model.isLocked ? HarnessgramFilterStrings.lockedExplanation : HarnessgramFilterStrings.filterIntro).textCase(nil)) {
                 ForEach(HarnessgramFilterRule.allCases, id: \.self) { rule in
                     let isLocked = self.model.isRuleLocked(rule)
@@ -119,6 +127,9 @@ struct HarnessgramFilterView: View {
 public func harnessgramFilterController(context: AccountContext) -> ViewController {
     let model = HarnessgramFilterModel()
     let controller = HarnessgramHostingScreen(context: context, title: HarnessgramFilterStrings.filterTitle, content: HarnessgramFilterView(model: model))
+    model.openAccountPrivacy = { [weak controller] in
+        (controller?.navigationController as? NavigationController)?.pushViewController(harnessgramAccountPrivacyController(context: context))
+    }
     model.presentNotice = { [weak controller] text in
         controller?.present(textAlertController(context: context, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: context.sharedContext.currentPresentationData.with { $0 }.strings.Common_OK, action: {})]), in: .window(.root))
     }

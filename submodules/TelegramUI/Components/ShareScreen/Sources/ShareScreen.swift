@@ -746,7 +746,7 @@ public final class ShareScreen: ViewControllerComponentContainer {
             return true
         }
         let data = self.context.sharedContext.currentPresentationData.with { $0 }
-        let hasAction = !PremiumConfiguration.with(appConfiguration: self.context.currentAppConfiguration.with { $0 }).isPremiumDisabled
+        let hasAction = !PremiumConfiguration.with(appConfiguration: self.context.currentAppConfiguration.with { $0 }).isPremiumPurchaseDisabled
         self.present(UndoOverlayController(presentationData: data, content: .premiumPaywall(
             title: nil, text: data.strings.Chat_ToastMessagingRestrictedToPremium_Text(peer.compactDisplayTitle).string,
             customUndoText: hasAction ? data.strings.Chat_ToastMessagingRestrictedToPremium_Action : nil,
@@ -755,7 +755,9 @@ public final class ShareScreen: ViewControllerComponentContainer {
             guard let self else { return false }
             if case .undo = action, let navigation = self.navigationController as? NavigationController {
                 self.view.endEditing(true)
-                let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .settings, forceDark: false, dismissed: nil)
+                guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .settings, forceDark: false, dismissed: nil) else {
+                    return false
+                }
                 controller.navigationPresentation = .modal
                 navigation.pushViewController(controller)
             }

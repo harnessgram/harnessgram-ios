@@ -1,4 +1,5 @@
 import Foundation
+import HarnessgramSettings
 import TelegramCore
 
 public enum PremiumIntroSource {
@@ -155,6 +156,18 @@ public enum StarsPurchasePurpose: Equatable {
 }
 
 public struct PremiumConfiguration {
+    public static var allowsPurchases: Bool {
+        return HarnessgramSettings.allowsTelegramPurchases()
+    }
+
+    public var isPremiumPurchaseDisabled: Bool {
+        return !HarnessgramSettings.allowsTelegramPurchases(serverAllowsPurchases: !self.isPremiumDisabled)
+    }
+
+    public var areStarsPurchasesDisabled: Bool {
+        return !HarnessgramSettings.allowsTelegramPurchases(serverAllowsPurchases: !self.isPremiumDisabled && !self.areStarsDisabled)
+    }
+
     public static var defaultValue: PremiumConfiguration {
         return PremiumConfiguration(
             isPremiumDisabled: false,
@@ -247,11 +260,11 @@ public struct PremiumConfiguration {
         self.isPremiumDisabled = isPremiumDisabled
         self.areStarsDisabled = areStarsDisabled
         self.subscriptionManagementUrl = subscriptionManagementUrl
-        self.showPremiumGiftInAttachMenu = showPremiumGiftInAttachMenu
-        self.showPremiumGiftInTextField = showPremiumGiftInTextField
-        self.giveawayGiftsPurchaseAvailable = giveawayGiftsPurchaseAvailable
-        self.starsGiftsPurchaseAvailable = starsGiftsPurchaseAvailable
-        self.starGiftsPurchaseBlocked = starGiftsPurchaseBlocked
+        self.showPremiumGiftInAttachMenu = Self.allowsPurchases && showPremiumGiftInAttachMenu
+        self.showPremiumGiftInTextField = Self.allowsPurchases && showPremiumGiftInTextField
+        self.giveawayGiftsPurchaseAvailable = Self.allowsPurchases && giveawayGiftsPurchaseAvailable
+        self.starsGiftsPurchaseAvailable = Self.allowsPurchases && starsGiftsPurchaseAvailable
+        self.starGiftsPurchaseBlocked = !Self.allowsPurchases || starGiftsPurchaseBlocked
         self.boostsPerGiftCount = boostsPerGiftCount
         self.audioTransciptionTrialMaxDuration = audioTransciptionTrialMaxDuration
         self.audioTransciptionTrialCount = audioTransciptionTrialCount

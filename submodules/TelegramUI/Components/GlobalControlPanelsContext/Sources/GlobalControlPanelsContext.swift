@@ -392,7 +392,7 @@ public final class GlobalControlPanelsContext {
                     
                     if let _ = accountFreezeConfiguration.freezeUntilDate {
                         return .single(.accountFreeze)
-                    } else if suggestions.contains(.starsSubscriptionLowBalance) {
+                    } else if PremiumConfiguration.allowsPurchases, suggestions.contains(.starsSubscriptionLowBalance) {
                         if let starsSubscriptionsContext {
                             return starsSubscriptionsContext.state
                             |> map { state in
@@ -411,11 +411,11 @@ public final class GlobalControlPanelsContext {
                         }
                     } else if suggestions.contains(.setupPhoto), let accountPeer, accountPeer.smallProfileImage == nil {
                         return .single(.setupPhoto(accountPeer))
-                    } else if suggestions.contains(.gracePremium) {
+                    } else if PremiumConfiguration.allowsPurchases, suggestions.contains(.gracePremium) {
                         return .single(.premiumGrace)
-                    } else if suggestions.contains(.xmasPremiumGift) {
+                    } else if PremiumConfiguration.allowsPurchases, suggestions.contains(.xmasPremiumGift) {
                         return .single(.xmasPremiumGift)
-                    } else if suggestions.contains(.annualPremium) || suggestions.contains(.upgradePremium) || suggestions.contains(.restorePremium), let inAppPurchaseManager = context.inAppPurchaseManager {
+                    } else if PremiumConfiguration.allowsPurchases, suggestions.contains(.annualPremium) || suggestions.contains(.upgradePremium) || suggestions.contains(.restorePremium), let inAppPurchaseManager = context.inAppPurchaseManager {
                         return inAppPurchaseManager.availableProducts
                         |> map { products -> ChatListNotice? in
                             if products.count > 1 {
@@ -455,7 +455,7 @@ public final class GlobalControlPanelsContext {
                                 return nil
                             }
                         }
-                    } else if !todayBirthdayPeerIds.isEmpty {
+                    } else if PremiumConfiguration.allowsPurchases, !todayBirthdayPeerIds.isEmpty {
                         return context.engine.data.get(
                             EngineDataMap(todayBirthdayPeerIds.map(TelegramEngine.EngineData.Item.Peer.Peer.init(id:)))
                         )

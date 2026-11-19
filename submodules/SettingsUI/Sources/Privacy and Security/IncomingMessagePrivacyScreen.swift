@@ -273,14 +273,17 @@ public func incomingMessagePrivacyScreen(context: AccountContext, value: GlobalP
             presentInCurrentControllerImpl?(UndoOverlayController(presentationData: presentationData, content: .premiumPaywall(title: presentationData.strings.Privacy_Messages_PremiumToast_Title, text: presentationData.strings.Privacy_Messages_PremiumToast_Text, customUndoText: presentationData.strings.Privacy_Messages_PremiumToast_Action, timeout: nil, linkAction: { _ in
             }), elevatedLayout: false, action: { action in
                 if case .undo = action {
-                    let controller = PremiumIntroScreen(context: context, source: .settings)
-                    pushControllerImpl?(controller)
+                    if let controller = PremiumIntroScreen(context: context, source: .settings) {
+                        pushControllerImpl?(controller)
+                    }
                 }
                 return false
             }))
         },
         infoLinkAction: {
-            let controller = PremiumIntroScreen(context: context, source: .settings)
+            guard let controller = PremiumIntroScreen(context: context, source: .settings) else {
+                return
+            }
             pushControllerImpl?(controller)
         },
         openExceptions: {
@@ -376,7 +379,9 @@ public func incomingMessagePrivacyScreen(context: AccountContext, value: GlobalP
         openPremiumInfo: {
             var replaceImpl: ((ViewController) -> Void)?
             let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .messagePrivacy, forceDark: false, action: {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .messageEffects, forceDark: false, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .messageEffects, forceDark: false, dismissed: nil) else {
+                    return
+                }
                 replaceImpl?(controller)
             }, dismissed: nil)
             replaceImpl = { [weak controller] c in

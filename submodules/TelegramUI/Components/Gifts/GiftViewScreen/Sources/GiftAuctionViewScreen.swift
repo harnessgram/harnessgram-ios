@@ -249,11 +249,13 @@ private final class GiftAuctionViewSheetContent: CombinedComponent {
             guard let controller = self.getController() as? GiftAuctionViewScreen else {
                 return
             }
-            let storeController = self.context.sharedContext.makeGiftStoreController(
+            guard let storeController = self.context.sharedContext.makeGiftStoreController(
                 context: self.context,
                 peerId: self.context.account.peerId,
                 gift: gift
-            )
+            ) else {
+                return
+            }
             controller.push(storeController)
         }
         
@@ -409,11 +411,13 @@ private final class GiftAuctionViewSheetContent: CombinedComponent {
             guard let controller = self.getController() as? GiftAuctionViewScreen, let gift = self.giftAuctionState?.gift, case let .generic(gift) = gift else {
                 return
             }
-            let storeController = self.context.sharedContext.makeGiftStoreController(
+            guard let storeController = self.context.sharedContext.makeGiftStoreController(
                 context: self.context,
                 peerId: self.peerId ?? self.context.account.peerId,
                 gift: gift
-            )
+            ) else {
+                return
+            }
             controller.push(storeController)
         }
         
@@ -1118,7 +1122,7 @@ private final class GiftAuctionViewSheetContent: CombinedComponent {
             )
             
             let buttonChild: _UpdatedChildComponent
-            if !isEnded {
+            if PremiumConfiguration.allowsPurchases && !isEnded {
                 let buttonAttributedString = NSMutableAttributedString(string: isUpcoming ? strings.Gift_Auction_EarlyBid : strings.Gift_Auction_Join, font: Font.semibold(17.0), textColor: theme.list.itemCheckColors.foregroundColor, paragraphAlignment: .center)
                 
                 let endTimeout: Int32

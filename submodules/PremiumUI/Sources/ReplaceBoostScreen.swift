@@ -383,7 +383,9 @@ private final class ReplaceBoostSheetComponent: CombinedComponent {
                             let navigationController = controller.navigationController
                             animateOut.invoke(Action { _ in
                                 controller.dismiss(completion: {
-                                    let giftController = accountContext.sharedContext.makePremiumGiftController(context: accountContext, source: .channelBoost, completion: nil)
+                                    guard let giftController = accountContext.sharedContext.makePremiumGiftController(context: accountContext, source: .channelBoost, completion: nil) else {
+                                        return
+                                    }
                                     navigationController?.pushViewController(giftController, animated: true)
                                 })
                             })

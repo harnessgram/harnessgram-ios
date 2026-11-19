@@ -10,6 +10,7 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
+        "//submodules/HarnessgramSettings:HarnessgramSettings",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/TelegramCore:TelegramCore",
         "//submodules/TelegramStringFormatting:TelegramStringFormatting",

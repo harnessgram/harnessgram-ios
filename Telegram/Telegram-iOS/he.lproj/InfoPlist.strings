@@ -1,0 +1,12 @@
+"NSCameraUsageDescription" = "המצלמה משמשת לצילום תמונות וסרטונים לשיתוף ולשיחות וידאו.";
+"NSContactsUsageDescription" = "אם מפעילים את סנכרון אנשי הקשר, אנשי הקשר נשלחים לענן המוצפן של ⁨Telegram⁩ כדי למצוא חברים שמשתמשים בשירות.";
+"NSFaceIDUsageDescription" = "זיהוי פנים משמש לפתיחת האפליקציה ולאישור פעולות רגישות.";
+"NSLocationAlwaysUsageDescription" = "כשמשתפים מיקום בזמן אמת, האפליקציה מעדכנת אותו ברקע עד לסיום השיתוף.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "כשמשתפים מיקום בזמן אמת, האפליקציה מעדכנת אותו ברקע עד לסיום השיתוף.";
+"NSLocationWhenInUseUsageDescription" = "המיקום מוצג על מפה כשבוחרים לשתף אותו בצ׳אט.";
+"NSMicrophoneUsageDescription" = "המיקרופון משמש לשיחות ולהקלטת הודעות קוליות וסרטונים עם קול.";
+"NSMotionUsageDescription" = "חיישני התנועה משמשים לכיוון המצלמה ולבקרת תנועה ביישומונים שבוחרים לפתוח.";
+"NSPhotoLibraryAddUsageDescription" = "תמונות וסרטונים שבוחרים לשמור מתווספים לספריית התמונות.";
+"NSPhotoLibraryUsageDescription" = "הגישה מאפשרת לבחור תמונות וסרטונים מהספרייה ולשתף אותם.";
+"NSSiriUsageDescription" = "אפשר לשלוח הודעות באמצעות סירי.";
+"NSSpeechRecognitionUsageDescription" = "זיהוי דיבור משמש לתמלול הודעות קוליות לפי בקשה.";

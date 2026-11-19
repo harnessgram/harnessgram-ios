@@ -249,7 +249,9 @@ final class HorizontalListContextResultsChatInputContextPanelNode: ChatInputCont
                                 guard let strongSelf = self else {
                                     return
                                 }
-                                let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers)
+                                guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers) else {
+                                    return
+                                }
                                 strongSelf.interfaceInteraction?.getNavigationController()?.pushViewController(controller)
                             }))
                         } else if let batchVideoContext = strongSelf.batchVideoContext.unsafeGet() {
@@ -282,7 +284,9 @@ final class HorizontalListContextResultsChatInputContextPanelNode: ChatInputCont
                                                 }
                                                 interfaceInteraction?.presentController(UndoOverlayController(presentationData: presentationData, content: .universal(animation: "anim_gif", scale: 0.075, colors: [:], title: presentationData.strings.Premium_MaxSavedGifsTitle("\(limit)").string, text: text, customUndoText: nil, timeout: nil), elevatedLayout: false, animateInAsReplacement: false, action: { action in
                                                     if case .info = action {
-                                                        let controller = PremiumIntroScreen(context: context, source: .savedGifs)
+                                                        guard let controller = PremiumIntroScreen(context: context, source: .savedGifs) else {
+                                                            return false
+                                                        }
                                                         interfaceInteraction?.getNavigationController()?.pushViewController(controller)
                                                         return true
                                                     }

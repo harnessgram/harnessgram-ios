@@ -176,7 +176,7 @@ public class ChatMessagePaymentAlertController: AlertScreen {
                                 let _ = (context.engine.payments.starsTopUpOptions()
                                 |> take(1)
                                 |> deliverOnMainQueue).startStandalone(next: { options in
-                                    let controller = context.sharedContext.makeStarsPurchaseScreen(
+                                    guard let controller = context.sharedContext.makeStarsPurchaseScreen(
                                         context: context,
                                         starsContext: starsContext,
                                         options: options,
@@ -184,7 +184,9 @@ public class ChatMessagePaymentAlertController: AlertScreen {
                                         targetPeerId: nil,
                                         customTheme: nil,
                                         completion: { _ in }
-                                    )
+                                    ) else {
+                                        return
+                                    }
                                     navigationController.pushViewController(controller)
                                 })
                             case .ton:

@@ -2,7 +2,7 @@ import Foundation
 import Postbox
 import SwiftSignalKit
 
-/// Simulator-only demo mode for the screenshot gate (build 20): a logged-in app with no network and no real account.
+/// A made-up account and chat fixtures shared by the offline sample and the simulator screenshot gate.
 /// `--harnessgram-demo` (TelegramUI AppDelegate) opens a fresh data folder; this writes a loopback proxy (every
 /// connection is refused on the machine itself, the method of Tests/ComposerHarness), an authorised account state for
 /// a made-up user, and made-up chats: a synthetic bridge bot and example project groups. Nothing is read
@@ -18,7 +18,77 @@ public enum HarnessgramDemoSeed {
         (900000003, "תוכן לדוגמה", "שלוש בקשות חדשות מחכות בתור."),
         (900000004, "חנות לדוגמה", "ההזמנות של היום נשלחו."),
     ]
+    private static let offlineGroups: [(id: Int64, title: String, line: String)] = [
+        (900000001, "פינת הקריאה", "האיור לפינת הקריאה מוכן. בסקיצה יש מדף ספרים, גלובוס ומטוס קטן."),
+        (900000002, "גלריית הכיתה", "חדר הקריאה הדמיוני מוכן לגלריית הציורים. ההחלטה על פתיחת הגלריה מחכה."),
+    ]
 
+    public struct OfflineChat: Sendable {
+        public let title: String
+        public let message: String
+    }
+
+    /// Opens the sample account's own Postbox directly. No AccountManager, network arguments, MTProto session,
+    /// proxy, or auth key are needed to read and write this local account.
+    public static func openOfflineAccount(directory: URL) -> Signal<[OfflineChat]?, NoError> {
+        // The database contains shipped fixtures only. Never borrow the device's real-account key or salt.
+        let encryption = ValueBoxEncryptionParameters(forceEncryptionIfNoSet: false, key: .init(data: Data(count: 32))!, salt: .init(data: Data(count: 16))!)
+        return openPostbox(
+            basePath: directory.appendingPathComponent("account/postbox", isDirectory: true).path,
+            seedConfiguration: telegramPostboxSeedConfiguration,
+            encryptionParameters: encryption,
+            timestampForAbsoluteTimeBasedOperations: Int32(Date().timeIntervalSince1970),
+            isMainProcess: true,
+            isTemporary: false,
+            isReadOnly: false,
+            useCopy: false,
+            useCaches: false,
+            removeDatabaseOnError: false
+        )
+        |> mapToSignal { result -> Signal<[OfflineChat]?, NoError> in
+            switch result {
+            case .upgrading:
+                return .complete()
+            case .error:
+                return .single(nil)
+            case let .postbox(postbox):
+                return postbox.transaction { transaction -> [OfflineChat]? in
+                    if transaction.getState() == nil {
+                        transaction.setState(AuthorizedAccountState(isTestingEnvironment: false, masterDatacenterId: 2, peerId: accountPeerId, state: nil, invalidatedChannels: []))
+                        addChats(transaction: transaction, offline: true)
+                    }
+                    guard let state = transaction.getState() as? AuthorizedAccountState, state.peerId == accountPeerId else {
+                        return nil
+                    }
+                    let peers = [bridgeBotId] + offlineGroups.map { channel(id: $0.id, title: $0.title).id }
+                    return peers.compactMap { peerId in
+                        let peer = transaction.getPeer(peerId)
+                        guard let title = (peer as? TelegramUser)?.firstName ?? (peer as? TelegramChannel)?.title,
+                              let message = transaction.getMessage(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: 1)) else {
+                            return nil
+                        }
+                        return OfflineChat(title: title, message: message.text)
+                    }
+                }
+            }
+        }
+        |> mapToSignal { chats in
+            return Signal<[OfflineChat]?, NoError> { subscriber in
+                // Let the open or transaction unwind on the Postbox queue before callers can erase the directory.
+                // Two hops: the first lets the open/transaction unwind, the second runs after any close it scheduled.
+                Postbox.sharedQueue.justDispatch {
+                    Postbox.sharedQueue.justDispatch {
+                        subscriber.putNext(chats)
+                        subscriber.putCompletion()
+                    }
+                }
+                return EmptyDisposable
+            }
+        }
+        |> take(1)
+    }
+
+    #if targetEnvironment(simulator)
     /// The loopback proxy, the account record (current) and its authorised state with the made-up chats.
     public static func seed(accountManager: AccountManager<TelegramAccountManagerTypes>, rootPath: String, networkArguments: NetworkInitializationArguments, encryptionParameters: ValueBoxEncryptionParameters, auxiliaryMethods: AccountAuxiliaryMethods) -> Signal<Bool, NoError> {
         let loopback = ProxyServerSettings(host: "127.0.0.1", port: 1, connection: .socks5(username: nil, password: nil))
@@ -52,6 +122,7 @@ public enum HarnessgramDemoSeed {
             }
         }
     }
+    #endif
 
     static func user(id: PeerId, firstName: String, username: String?, isBot: Bool) -> TelegramUser {
         return TelegramUser(id: id, accessHash: nil, firstName: firstName, lastName: nil, username: username, phone: nil, photo: [], botInfo: isBot ? BotUserInfo(flags: [], inlinePlaceholder: nil) : nil, restrictionInfo: nil, flags: [], emojiStatus: nil, usernames: [], storiesHidden: nil, nameColor: nil, backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, subscriberCount: nil, verificationIconFileId: nil)
@@ -61,7 +132,7 @@ public enum HarnessgramDemoSeed {
         return TelegramChannel(id: PeerId(namespace: Namespaces.Peer.CloudChannel, id: PeerId.Id._internalFromInt64Value(id)), accessHash: nil, title: title, username: nil, photo: [], creationDate: 0, version: 0, participationStatus: .member, info: .group(TelegramChannelGroupInfo(flags: [])), flags: [], restrictionInfo: nil, adminRights: nil, bannedRights: nil, defaultBannedRights: nil, usernames: [], storiesHidden: nil, nameColor: nil, backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, emojiStatus: nil, approximateBoostLevel: nil, subscriptionUntilDate: nil, verificationIconFileId: nil, sendPaidMessageStars: nil, linkedMonoforumId: nil)
     }
 
-    static func addChats(transaction: Transaction) {
+    static func addChats(transaction: Transaction, offline: Bool = false) {
         let me = HarnessgramDemoSeed.user(id: HarnessgramDemoSeed.accountPeerId, firstName: "Harnessgram", username: nil, isBot: false)
         let bot = HarnessgramDemoSeed.user(id: HarnessgramDemoSeed.bridgeBotId, firstName: "גשר", username: "ExampleBridgeBot", isBot: true)
         var peers: [Peer] = [me, bot]
@@ -70,8 +141,8 @@ public enum HarnessgramDemoSeed {
         func line(_ peerId: PeerId, _ id: Int32, _ author: PeerId, _ text: String, _ age: Int32) {
             messages.append(StoreMessage(id: MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: id), customStableId: nil, globallyUniqueId: nil, groupingKey: nil, threadId: nil, timestamp: now - age, flags: [.Incoming], tags: [], globalTags: [], localTags: [], forwardInfo: nil, authorId: author, text: text, attributes: [], media: []))
         }
-        line(bot.id, 1, bot.id, "יש שאלה שמחכה לך: למזג את תיקון ההתחברות?", 60)
-        for (index, group) in HarnessgramDemoSeed.groups.enumerated() {
+        line(bot.id, 1, bot.id, offline ? "האיור לפינת הקריאה מחכה לבחירה." : "יש שאלה שמחכה לך: למזג את תיקון ההתחברות?", 60)
+        for (index, group) in (offline ? HarnessgramDemoSeed.offlineGroups : HarnessgramDemoSeed.groups).enumerated() {
             let channel = HarnessgramDemoSeed.channel(id: group.id, title: group.title)
             peers.append(channel)
             line(channel.id, 1, bot.id, group.line, Int32(300 * (index + 1)))

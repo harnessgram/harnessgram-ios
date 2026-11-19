@@ -990,8 +990,10 @@ private final class SheetContent: CombinedComponent {
                                                     guard let controller, let state else {
                                                         return
                                                     }
-                                                    let purchaseController = state.context.sharedContext.makeStarsPurchaseScreen(context: state.context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { _ in
-                                                    })
+                                                    guard let purchaseController = state.context.sharedContext.makeStarsPurchaseScreen(context: state.context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { _ in
+                                                    }) else {
+                                                        return
+                                                    }
                                                     controller.push(purchaseController)
                                                 })
                                                 

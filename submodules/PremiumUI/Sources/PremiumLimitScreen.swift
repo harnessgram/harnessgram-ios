@@ -859,7 +859,7 @@ private final class LimitSheetContent: CombinedComponent {
             if case .storiesChannelBoost = subject {
                 isPremiumDisabled = false
             } else {
-                isPremiumDisabled = premiumConfiguration.isPremiumDisabled
+                isPremiumDisabled = premiumConfiguration.isPremiumPurchaseDisabled
             }
             
             let sideInset: CGFloat = 16.0 + environment.safeInsets.left

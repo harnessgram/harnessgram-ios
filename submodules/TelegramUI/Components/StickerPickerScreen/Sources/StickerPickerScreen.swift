@@ -832,7 +832,9 @@ public class StickerPickerScreen: ViewController {
                                 }
                                 controller.present(UndoOverlayController(presentationData: presentationData, content: .universal(animation: "anim_gif", scale: 0.075, colors: [:], title: presentationData.strings.Premium_MaxSavedGifsTitle("\(limit)").string, text: text, customUndoText: nil, timeout: nil), elevatedLayout: false, animateInAsReplacement: false, action: { [weak controller] action in
                                     if case .info = action, let controller {
-                                        let premiumController = context.sharedContext.makePremiumIntroController(context: context, source: .savedGifs, forceDark: controller.forceDark, dismissed: nil)
+                                        guard let premiumController = context.sharedContext.makePremiumIntroController(context: context, source: .savedGifs, forceDark: controller.forceDark, dismissed: nil) else {
+                                            return false
+                                        }
                                         controller.pushController(premiumController)
                                         return true
                                     }
@@ -1663,7 +1665,9 @@ public class StickerPickerScreen: ViewController {
                         let _ = controller.completion(nil)
                         controller.dismiss(animated: true)
                         
-                        let premiumController = controller.context.sharedContext.makePremiumIntroController(context: controller.context, source: .storiesLinks, forceDark: controller.forceDark, dismissed: nil)
+                        guard let premiumController = controller.context.sharedContext.makePremiumIntroController(context: controller.context, source: .storiesLinks, forceDark: controller.forceDark, dismissed: nil) else {
+                            return false
+                        }
                         controller.pushController(premiumController)
                         return true
                     }

@@ -640,7 +640,9 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     c?.dismiss(completion: {
                         var replaceImpl: ((ViewController) -> Void)?
                         let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .noAds, forceDark: false, action: {
-                            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil)
+                            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil) else {
+                                return
+                            }
                             replaceImpl?(controller)
                         }, dismissed: nil)
                         replaceImpl = { [weak controller] c in
@@ -1172,7 +1174,9 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     let context = context
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .fasterDownload, forceDark: false, action: {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .fasterDownload, forceDark: false, dismissed: nil)
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .fasterDownload, forceDark: false, dismissed: nil) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     }, dismissed: nil)
                     replaceImpl = { [weak controller] c in
@@ -1202,7 +1206,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             })))
         }
         
-        if data.messageActions.options.contains(.sendGift), !message.id.peerId.isTelegramNotifications {
+        if PremiumConfiguration.allowsPurchases, data.messageActions.options.contains(.sendGift), !message.id.peerId.isTelegramNotifications {
             let sendGiftTitle: String
             var isIncoming = message.effectivelyIncoming(context.account.peerId)
             for media in message.media {
@@ -1919,7 +1923,9 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                                     }
                                                     controllerInteraction.presentControllerInCurrent(UndoOverlayController(presentationData: presentationData, content: .universal(animation: "anim_gif", scale: 0.075, colors: [:], title: presentationData.strings.Premium_MaxSavedGifsTitle("\(limit)").string, text: text, customUndoText: nil, timeout: nil), elevatedLayout: false, animateInAsReplacement: false, action: { action in
                                                         if case .info = action {
-                                                            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .savedGifs, forceDark: false, dismissed: nil)
+                                                            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .savedGifs, forceDark: false, dismissed: nil) else {
+                                                                return false
+                                                            }
                                                             controllerInteraction.navigationController()?.pushViewController(controller)
                                                             return true
                                                         }

@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 
+#import <MtProtoKit/MTSignal.h>
 #import <MtProtoKit/MTTcpTransport.h>
 
 #import "MTTestSupport.h"
@@ -53,6 +54,58 @@ static const NSTimeInterval kRetryWindow = 10.0;
     MTTestOnManagerQueue(^{
         [proto handleMissingKey:scheme];
     });
+}
+
+- (void)testPausingConnectionPreparationCancelsAndPreventsAuthAttemptsUntilResume {
+    [self loseTempKey];
+    XCTAssertTrue([_recorder waitForAuthActionCount:1 timeout:5.0]);
+    if ([_recorder authActionCount] != 1) return;
+    [_proto pause];
+    [_context setConnectionPreparationPaused:true];
+    [_context authInfoForDatacenterWithIdRequired:2 isCdn:false selector:MTDatacenterAuthInfoSelectorPersistent allowUnboundEphemeralKeys:false];
+    [[MTContext contextQueue] dispatchOnQueue:^{
+        XCTAssertTrue([self->_recorder authActionAtIndex:0].wasCancelled);
+        XCTAssertEqual([self->_recorder authActionCount], 1u);
+    } synchronous:true];
+
+    [_context setConnectionPreparationPaused:false];
+    [_proto resume];
+    XCTAssertTrue([_recorder waitForAuthActionCount:2 timeout:5.0]);
+    if ([_recorder authActionCount] < 2) return;
+    XCTAssertEqual([_recorder authActionAtIndex:1].datacenterId, kMasterDatacenterId);
+    XCTAssertEqual([_recorder authActionAtIndex:1].selector, MTDatacenterAuthInfoSelectorEphemeralMain);
+}
+
+- (void)testConnectionResumeRestartsCancelledTransportDiscovery {
+    MTContext *context = MTTestMakeContext(false);
+    MTContextBlockChangeListener *listener = [[MTContextBlockChangeListener alloc] init];
+    __block NSUInteger discoveryAttempts = 0;
+    listener.isContextNetworkAccessAllowed = ^MTSignal *(MTContext *unusedContext) {
+        discoveryAttempts++;
+        return [MTSignal never];
+    };
+    [context addChangeListener:listener];
+    MTProto *proto = [[MTProto alloc] initWithContext:context datacenterId:kMasterDatacenterId usageCalculationInfo:nil requiredAuthToken:nil authTokenMasterDatacenterId:0];
+
+    MTTestOnManagerQueue(^{ [proto resume]; });
+    [[MTContext contextQueue] dispatchOnQueue:^{
+        XCTAssertEqual(discoveryAttempts, 1u);
+    } synchronous:true];
+
+    MTTestOnManagerQueue(^{ [proto pause]; });
+    [context setConnectionPreparationPaused:true];
+    [[MTContext contextQueue] dispatchOnQueue:^{
+        XCTAssertEqual(discoveryAttempts, 1u);
+    } synchronous:true];
+
+    [context setConnectionPreparationPaused:false];
+    MTTestOnManagerQueue(^{ [proto resume]; });
+    [[MTContext contextQueue] dispatchOnQueue:^{
+        XCTAssertEqual(discoveryAttempts, 2u);
+    } synchronous:true];
+
+    [proto stop];
+    [context removeChangeListener:listener];
 }
 
 // The harness itself: a lost temp key is recreated and the connection stops

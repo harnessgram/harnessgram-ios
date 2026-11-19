@@ -758,7 +758,13 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
             let panelContentContainer: UIView
             
             var panelVisibility = params.expandProgress < 1.0 ? 0.0 : 1.0
-            if !self.canGift || self.resultsAreEmpty {
+            let canAddToOwnCollection: Bool
+            if case .collection = self.currentCollection {
+                canAddToOwnCollection = self.peerId == self.context.account.peerId
+            } else {
+                canAddToOwnCollection = false
+            }
+            if !self.canGift || self.resultsAreEmpty || (!canAddToOwnCollection && !PremiumConfiguration.allowsPurchases) {
                 panelVisibility = 0.0
             }
             self.isBottomPanelVisible = panelVisibility > 0.0
@@ -966,7 +972,9 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
                     guard let self else {
                         return
                     }
-                    let controller = self.context.sharedContext.makePremiumGiftController(context: self.context, source: .settings(birthdays), completion: nil)
+                    guard let controller = self.context.sharedContext.makePremiumGiftController(context: self.context, source: .settings(birthdays), completion: nil) else {
+                        return
+                    }
                     controller.navigationPresentation = .modal
                     self.chatControllerInteraction.navigationController()?.pushViewController(controller)
                 })
@@ -1186,7 +1194,9 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
                                 appearance: UndoOverlayController.Appearance(sideInset: 16.0, bottomInset: 62.0),
                                 action: { [weak self] action in
                                     if let self, case .info = action {
-                                        let premiumController = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .messageEffects, forceDark: false, dismissed: nil)
+                                        guard let premiumController = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .messageEffects, forceDark: false, dismissed: nil) else {
+                                            return false
+                                        }
                                         self.parentController?.push(premiumController)
                                     }
                                     return false
@@ -1377,7 +1387,7 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
                                 showSelf = true
                             }
                             let transferStars = gift.transferStars ?? 0
-                            let controller = context.sharedContext.makePremiumGiftController(context: context, source: .starGiftTransfer(birthdays, reference, uniqueGift, transferStars, gift.canExportDate, showSelf), completion: { peerIds in
+                            guard let controller = context.sharedContext.makePremiumGiftController(context: context, source: .starGiftTransfer(birthdays, reference, uniqueGift, transferStars, gift.canExportDate, showSelf), completion: { peerIds in
                                 guard let peerId = peerIds.first else {
                                     return .complete()
                                 }
@@ -1389,7 +1399,9 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
                                 return profileGifts.transferStarGift(prepaid: transferStars == 0, reference: reference, peerId: peerId)
                             }, withdraw: { reference, password in
                                 return profileGifts.withdrawStarGift(reference: reference, keepOnProfile: false, password: password)
-                            })
+                            }) else {
+                                return
+                            }
                             self.parentController?.push(controller)
                         })
                     })

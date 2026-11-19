@@ -1053,7 +1053,7 @@ public final class ChatEmptyNodePremiumRequiredChatContent: ASDisplayNode, ChatE
     
     public init(context: AccountContext, interaction: ChatPanelInterfaceInteraction?, stars: Int64?) {
         let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
-        self.isPremiumDisabled = premiumConfiguration.isPremiumDisabled
+        self.isPremiumDisabled = premiumConfiguration.isPremiumPurchaseDisabled
         self.stars = stars
         
         self.interaction = interaction
@@ -1810,7 +1810,9 @@ public final class ChatEmptyNode: ASDisplayNode {
                         if isPremium {
                             dismissImpl?()
                         } else {
-                            let controller = PremiumIntroScreen(context: context, source: .settings, forceDark: false)
+                            guard let controller = PremiumIntroScreen(context: context, source: .settings, forceDark: false) else {
+                                return
+                            }
                             replaceImpl?(controller)
                         }
                     }

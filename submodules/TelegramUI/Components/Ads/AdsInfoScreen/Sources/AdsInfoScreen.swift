@@ -610,12 +610,14 @@ private final class AdsInfoSheetComponent: CombinedComponent {
                                 dismiss(true)
 
                                 Queue.mainQueue().after(0.3) {
-                                    let premiumController = accountContext.sharedContext.makePremiumIntroController(
+                                    guard let premiumController = accountContext.sharedContext.makePremiumIntroController(
                                         context: accountContext,
                                         source: .ads,
                                         forceDark: forceDark,
                                         dismissed: nil
-                                    )
+                                    ) else {
+                                        return
+                                    }
                                     navigationController?.pushViewController(premiumController, animated: true)
                                 }
                             }
@@ -1003,7 +1005,9 @@ public final class AdsInfoScreen: ViewControllerComponentContainer {
             subject: .noAds,
             forceDark: false,
             action: {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil) else {
+                    return
+                }
                 replaceImpl?(controller)
             },
             dismissed: nil

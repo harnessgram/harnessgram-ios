@@ -201,7 +201,9 @@ final class HorizontalStickersChatContextPanelNode: ChatInputContextPanelNode {
                                                     strongSelf.interfaceInteraction?.presentGlobalOverlayController(UndoOverlayController(presentationData: presentationData, content: .sticker(context: strongSelf.context, file: item.file._parse(), loop: true, title: strongSelf.strings.Premium_MaxFavedStickersTitle("\(limit)").string, text: text, undoText: nil, customAction: nil), elevatedLayout: false, action: { [weak self] action in
                                                         if let strongSelf = self {
                                                             if case .info = action {
-                                                                let controller = PremiumIntroScreen(context: strongSelf.context, source: .savedStickers)
+                                                                guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .savedStickers) else {
+                                                                    return false
+                                                                }
                                                                 strongSelf.controllerInteraction?.navigationController()?.pushViewController(controller)
                                                                 return true
                                                             }
@@ -243,7 +245,9 @@ final class HorizontalStickersChatContextPanelNode: ChatInputContextPanelNode {
                                 guard let strongSelf = self else {
                                     return
                                 }
-                                let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers)
+                                guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers) else {
+                                    return
+                                }
                                 strongSelf.controllerInteraction?.navigationController()?.pushViewController(controller)
                             }))
                         } else {

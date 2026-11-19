@@ -280,107 +280,109 @@ private final class SheetContent: CombinedComponent {
                 .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + actionButton.size.height / 2.0))
             )
             contentSize.height += actionButton.size.height
-            contentSize.height += 22.0
-                        
-            let orText = orText.update(
-                component: MultilineTextComponent(text: .plain(NSAttributedString(string: strings.ChannelBoost_Or, font: Font.regular(15.0), textColor: secondaryTextColor, paragraphAlignment: .center))),
-                availableSize: CGSize(width: context.availableSize.width - sideInset * 2.0, height: context.availableSize.height),
-                transition: .immediate
-            )
-            context.add(orText
-                .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + orText.size.height / 2.0))
-            )
-            
-            let orLeftLine = orLeftLine.update(
-                component: Rectangle(color: theme.list.itemBlocksSeparatorColor.withAlphaComponent(0.3)),
-                availableSize: CGSize(width: 90.0, height: 1.0 - UIScreenPixel),
-                transition: .immediate
-            )
-            context.add(orLeftLine
-                .position(CGPoint(x: context.availableSize.width / 2.0 - orText.size.width / 2.0 - 11.0 - 45.0, y: contentSize.height + orText.size.height / 2.0))
-            )
-            
-            let orRightLine = orRightLine.update(
-                component: Rectangle(color: theme.list.itemBlocksSeparatorColor.withAlphaComponent(0.3)),
-                availableSize: CGSize(width: 90.0, height: 1.0 - UIScreenPixel),
-                transition: .immediate
-            )
-            context.add(orRightLine
-                .position(CGPoint(x: context.availableSize.width / 2.0 + orText.size.width / 2.0 + 11.0 + 45.0, y: contentSize.height + orText.size.height / 2.0))
-            )
-            contentSize.height += orText.size.height
-            contentSize.height += 18.0
-            
-            let premiumTitle = premiumTitle.update(
-                component: BalancedTextComponent(
-                    text: .plain(NSAttributedString(string: premiumTitleString, font: titleFont, textColor: textColor)),
-                    horizontalAlignment: .center,
-                    maximumNumberOfLines: 0,
-                    lineSpacing: 0.1
-                ),
-                availableSize: CGSize(width: context.availableSize.width - textSideInset * 2.0, height: context.availableSize.height),
-                transition: .immediate
-            )
-            context.add(premiumTitle
-                .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + premiumTitle.size.height / 2.0))
-            )
-            contentSize.height += premiumTitle.size.height
-            contentSize.height += spacing
-            
-            let premiumText = premiumText.update(
-                component: BalancedTextComponent(
-                    text: .markdown(text: premiumString, attributes: markdownAttributes),
-                    horizontalAlignment: .center,
-                    maximumNumberOfLines: 0,
-                    lineSpacing: 0.2
-                ),
-                availableSize: CGSize(width: context.availableSize.width - textSideInset * 2.0, height: context.availableSize.height),
-                transition: .immediate
-            )
-            context.add(premiumText
-                .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + premiumText.size.height / 2.0))
-            )
-            contentSize.height += premiumText.size.height
-            contentSize.height += spacing + 5.0
-            
-            let premiumGradientColors = [
-                UIColor(rgb: 0x0077ff),
-                UIColor(rgb: 0x6b93ff),
-                UIColor(rgb: 0x8878ff),
-                UIColor(rgb: 0xe46ace)
-            ]
-            let premiumButton = premiumButton.update(
-                component: ButtonComponent(
-                    background: ButtonComponent.Background(
-                        style: .glass,
-                        color: premiumGradientColors[0],
-                        foreground: .white,
-                        pressedColor: premiumGradientColors[0],
-                        isShimmering: false,
-                        gradient: ButtonComponent.Background.Gradient(colors: premiumGradientColors)
+            if PremiumConfiguration.allowsPurchases {
+                contentSize.height += 22.0
+
+                let orText = orText.update(
+                    component: MultilineTextComponent(text: .plain(NSAttributedString(string: strings.ChannelBoost_Or, font: Font.regular(15.0), textColor: secondaryTextColor, paragraphAlignment: .center))),
+                    availableSize: CGSize(width: context.availableSize.width - sideInset * 2.0, height: context.availableSize.height),
+                    transition: .immediate
+                )
+                context.add(orText
+                    .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + orText.size.height / 2.0))
+                )
+
+                let orLeftLine = orLeftLine.update(
+                    component: Rectangle(color: theme.list.itemBlocksSeparatorColor.withAlphaComponent(0.3)),
+                    availableSize: CGSize(width: 90.0, height: 1.0 - UIScreenPixel),
+                    transition: .immediate
+                )
+                context.add(orLeftLine
+                    .position(CGPoint(x: context.availableSize.width / 2.0 - orText.size.width / 2.0 - 11.0 - 45.0, y: contentSize.height + orText.size.height / 2.0))
+                )
+
+                let orRightLine = orRightLine.update(
+                    component: Rectangle(color: theme.list.itemBlocksSeparatorColor.withAlphaComponent(0.3)),
+                    availableSize: CGSize(width: 90.0, height: 1.0 - UIScreenPixel),
+                    transition: .immediate
+                )
+                context.add(orRightLine
+                    .position(CGPoint(x: context.availableSize.width / 2.0 + orText.size.width / 2.0 + 11.0 + 45.0, y: contentSize.height + orText.size.height / 2.0))
+                )
+                contentSize.height += orText.size.height
+                contentSize.height += 18.0
+
+                let premiumTitle = premiumTitle.update(
+                    component: BalancedTextComponent(
+                        text: .plain(NSAttributedString(string: premiumTitleString, font: titleFont, textColor: textColor)),
+                        horizontalAlignment: .center,
+                        maximumNumberOfLines: 0,
+                        lineSpacing: 0.1
                     ),
-                    content: AnyComponentWithIdentity(
-                        id: AnyHashable(premiumButtonTitle),
-                        component: AnyComponent(ButtonTextContentComponent(
-                            text: premiumButtonTitle,
-                            badge: 0,
-                            textColor: .white,
-                            badgeBackground: .white,
-                            badgeForeground: premiumGradientColors[0]
-                        ))
+                    availableSize: CGSize(width: context.availableSize.width - textSideInset * 2.0, height: context.availableSize.height),
+                    transition: .immediate
+                )
+                context.add(premiumTitle
+                    .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + premiumTitle.size.height / 2.0))
+                )
+                contentSize.height += premiumTitle.size.height
+                contentSize.height += spacing
+
+                let premiumText = premiumText.update(
+                    component: BalancedTextComponent(
+                        text: .markdown(text: premiumString, attributes: markdownAttributes),
+                        horizontalAlignment: .center,
+                        maximumNumberOfLines: 0,
+                        lineSpacing: 0.2
                     ),
-                    action: {
-                        component.openPremiumIntro()
-                        component.dismiss()
-                    }
-                ),
-                availableSize: CGSize(width: context.availableSize.width - buttonInsets.left - buttonInsets.right, height: 52.0),
-                transition: context.transition
-            )
-            context.add(premiumButton
-                .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + premiumButton.size.height / 2.0))
-            )
-            contentSize.height += premiumButton.size.height
+                    availableSize: CGSize(width: context.availableSize.width - textSideInset * 2.0, height: context.availableSize.height),
+                    transition: .immediate
+                )
+                context.add(premiumText
+                    .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + premiumText.size.height / 2.0))
+                )
+                contentSize.height += premiumText.size.height
+                contentSize.height += spacing + 5.0
+
+                let premiumGradientColors = [
+                    UIColor(rgb: 0x0077ff),
+                    UIColor(rgb: 0x6b93ff),
+                    UIColor(rgb: 0x8878ff),
+                    UIColor(rgb: 0xe46ace)
+                ]
+                let premiumButton = premiumButton.update(
+                    component: ButtonComponent(
+                        background: ButtonComponent.Background(
+                            style: .glass,
+                            color: premiumGradientColors[0],
+                            foreground: .white,
+                            pressedColor: premiumGradientColors[0],
+                            isShimmering: false,
+                            gradient: ButtonComponent.Background.Gradient(colors: premiumGradientColors)
+                        ),
+                        content: AnyComponentWithIdentity(
+                            id: AnyHashable(premiumButtonTitle),
+                            component: AnyComponent(ButtonTextContentComponent(
+                                text: premiumButtonTitle,
+                                badge: 0,
+                                textColor: .white,
+                                badgeBackground: .white,
+                                badgeForeground: premiumGradientColors[0]
+                            ))
+                        ),
+                        action: {
+                            component.openPremiumIntro()
+                            component.dismiss()
+                        }
+                    ),
+                    availableSize: CGSize(width: context.availableSize.width - buttonInsets.left - buttonInsets.right, height: 52.0),
+                    transition: context.transition
+                )
+                context.add(premiumButton
+                    .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + premiumButton.size.height / 2.0))
+                )
+                contentSize.height += premiumButton.size.height
+            }
             contentSize.height += buttonInsets.bottom
                 
             state.playAnimationIfNeeded()

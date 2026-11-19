@@ -1,4 +1,5 @@
 import Foundation
+import HarnessgramSettings
 import Postbox
 import MtProtoKit
 import SwiftSignalKit
@@ -21,6 +22,15 @@ public enum BotPaymentInvoiceSource {
     case starGiftPrepaidUpgrade(peerId: EnginePeer.Id, hash: String)
     case starGiftDropOriginalDetails(reference: StarGiftReference)
     case starGiftAuctionBid(update: Bool, hideName: Bool, peerId: EnginePeer.Id?, giftId: Int64, bidAmount: Int64, text: String?, entities: [MessageTextEntity]?)
+
+    var isAllowedByPurchasePolicy: Bool {
+        switch self {
+        case .premiumGiveaway, .giftCode, .stars, .starsGift, .starsGiveaway, .starGift, .premiumGift, .starGiftResale, .starGiftAuctionBid:
+            return HarnessgramSettings.allowsTelegramPurchases()
+        case .message, .slug, .starsChatSubscription, .starGiftUpgrade, .starGiftTransfer, .starGiftPrepaidUpgrade, .starGiftDropOriginalDetails:
+            return true
+        }
+    }
 }
 
 public struct BotPaymentInvoiceFields: OptionSet {
@@ -730,6 +740,9 @@ public enum SendBotPaymentResult {
 }
 
 func _internal_sendBotPaymentForm(account: Account, formId: Int64, source: BotPaymentInvoiceSource, validatedInfoId: String?, shippingOptionId: String?, tipAmount: Int64?, credentials: BotPaymentCredentials) -> Signal<SendBotPaymentResult, SendBotPaymentFormError> {
+    guard source.isAllowedByPurchasePolicy else {
+        return .fail(.generic)
+    }
     return account.postbox.transaction { transaction -> Api.InputInvoice? in
         return _internal_parseInputInvoice(transaction: transaction, source: source)
     }

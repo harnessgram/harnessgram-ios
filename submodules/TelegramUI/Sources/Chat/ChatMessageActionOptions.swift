@@ -56,7 +56,9 @@ private func maybePresentForwardRichTextPremiumToast(selfController: ChatControl
                         return
                     }
                     contextController?.dismiss()
-                    let premiumController = selfController.context.sharedContext.makePremiumIntroController(context: selfController.context, source: .richText, forceDark: false, dismissed: nil)
+                    guard let premiumController = selfController.context.sharedContext.makePremiumIntroController(context: selfController.context, source: .richText, forceDark: false, dismissed: nil) else {
+                        return
+                    }
                     selfController.push(premiumController)
                 }
             ),
@@ -668,7 +670,7 @@ func moveReplyMessageToAnotherChat(selfController: ChatControllerImpl, replySubj
                     
                     var hasAction = false
                     let premiumConfiguration = PremiumConfiguration.with(appConfiguration: selfController.context.currentAppConfiguration.with { $0 })
-                    if !premiumConfiguration.isPremiumDisabled {
+                    if !premiumConfiguration.isPremiumPurchaseDisabled {
                         hasAction = true
                     }
                     
@@ -678,7 +680,9 @@ func moveReplyMessageToAnotherChat(selfController: ChatControllerImpl, replySubj
                             return false
                         }
                         if case .undo = action {
-                            let premiumController = PremiumIntroScreen(context: selfController.context, source: .settings)
+                            guard let premiumController = PremiumIntroScreen(context: selfController.context, source: .settings) else {
+                                return false
+                            }
                             controller.push(premiumController)
                         }
                         return false

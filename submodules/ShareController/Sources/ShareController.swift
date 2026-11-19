@@ -1179,7 +1179,7 @@ public final class ShareController: ViewController {
             var hasAction = false
             if let context = self.currentContext as? ShareControllerAppAccountContext {
                 let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.context.currentAppConfiguration.with { $0 })
-                if !premiumConfiguration.isPremiumDisabled {
+                if !premiumConfiguration.isPremiumPurchaseDisabled {
                     hasAction = true
                 }
             }
@@ -1192,7 +1192,9 @@ public final class ShareController: ViewController {
                 if case .undo = action {
                     self.controllerNode.cancel?()
                     
-                    let premiumController = context.context.sharedContext.makePremiumIntroController(context: context.context, source: .settings, forceDark: false, dismissed: nil)
+                    guard let premiumController = context.context.sharedContext.makePremiumIntroController(context: context.context, source: .settings, forceDark: false, dismissed: nil) else {
+                        return false
+                    }
                     parentNavigationController.pushViewController(premiumController)
                 }
                 return false

@@ -623,7 +623,9 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
             }, selectLocalization: { [weak self] info in self?.selectLocalization(info) }, setItemWithRevealedOptions: setItemWithRevealedOptions, removeItem: removeItem, showPremiumInfo: {
                 var replaceImpl: ((ViewController) -> Void)?
                 let controller = PremiumDemoScreen(context: context, subject: .translation, action: {
-                    let controller = PremiumIntroScreen(context: context, source: .translation)
+                    guard let controller = PremiumIntroScreen(context: context, source: .translation) else {
+                        return
+                    }
                     replaceImpl?(controller)
                 })
                 replaceImpl = { [weak controller] c in

@@ -79,6 +79,9 @@ public struct HarnessgramWaitingContent: View {
 
     /// The top line's topic, else the app (which refreshes the widgets when it opens).
     private var tapURL: URL {
+        if self.entry.isSample {
+            return HarnessgramSampleStore.openURL
+        }
         if self.entry.needsPairing {
             // Not connected yet: the tap connects the widgets (the line on it says so).
             return HarnessgramCockpitLinks.pairURL
@@ -232,7 +235,7 @@ public struct HarnessgramWaitingContent: View {
                 Image(systemName: "bell.badge.fill")
                     .foregroundStyle(HarnessgramWidgetPalette.accent)
                     .widgetAccentable()
-                Text(HarnessgramWidgetStrings.waitingTitle)
+                Text(self.entry.isSample ? HarnessgramWidgetStrings.sampleData : HarnessgramWidgetStrings.waitingTitle)
                     .font(.system(size: 14, weight: .semibold))
                 Spacer(minLength: 0)
             }
@@ -276,7 +279,7 @@ public struct HarnessgramWaitingContent: View {
                     Spacer(minLength: 0)
                 } else {
                     ForEach(snapshot.decisions.prefix(lines)) { decision in
-                        HarnessgramDecisionRow(decision: decision, route: HarnessgramWaitingContent.route(decision, canAnswerOnWidget: self.entry.canAnswerOnWidget), showsTopic: !compact)
+                        HarnessgramDecisionRow(decision: decision, route: HarnessgramWaitingContent.route(decision, canAnswerOnWidget: self.entry.canAnswerOnWidget), showsTopic: !compact, isSample: self.entry.isSample)
                     }
                 }
                 if showAgents {
@@ -304,7 +307,7 @@ public struct HarnessgramWaitingContent: View {
         }
         .padding(compact ? 12 : 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .widgetURL(HarnessgramCockpitLinks.openURL)
+        .widgetURL(self.entry.isSample ? HarnessgramSampleStore.openURL : HarnessgramCockpitLinks.openURL)
         .containerBackground(for: .widget) { self.background }
     }
 
@@ -325,7 +328,9 @@ public struct HarnessgramWaitingContent: View {
                 .font(.system(size: 15, weight: .bold))
                 .lineLimit(1)
             Spacer(minLength: 4)
-            if self.snapshot != nil {
+            if self.entry.isSample {
+                Text(HarnessgramWidgetStrings.sampleData).font(.caption).foregroundStyle(.secondary)
+            } else if self.snapshot != nil {
                 self.agentsChip
                 self.radioChip
             }
@@ -373,7 +378,7 @@ public struct HarnessgramWaitingContent: View {
                     .foregroundStyle(.secondary)
             }
             ForEach(snapshot.agents.prefix(3)) { agent in
-                Link(destination: HarnessgramCockpitLinks.appURL(forTopicURL: agent.topicURL) ?? HarnessgramCockpitLinks.openURL) {
+                Link(destination: self.entry.isSample ? HarnessgramSampleStore.openURL : HarnessgramCockpitLinks.appURL(forTopicURL: agent.topicURL) ?? HarnessgramCockpitLinks.openURL) {
                     HStack(spacing: 6) {
                         Circle()
                             .fill(HarnessgramWidgetPalette.approve)
@@ -412,10 +417,11 @@ struct HarnessgramDecisionRow: View {
     let decision: HarnessgramCockpitSnapshot.Decision
     let route: HarnessgramDecisionGate.Route
     let showsTopic: Bool
+    var isSample = false
 
     var body: some View {
         HStack(spacing: 8) {
-            Link(destination: HarnessgramCockpitLinks.appURL(forTopicURL: self.decision.topicURL) ?? HarnessgramCockpitLinks.openURL) {
+            Link(destination: self.isSample ? HarnessgramSampleStore.openURL : HarnessgramCockpitLinks.appURL(forTopicURL: self.decision.topicURL) ?? HarnessgramCockpitLinks.openURL) {
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 4) {
                         if self.decision.sensitive {
@@ -440,7 +446,9 @@ struct HarnessgramDecisionRow: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            self.buttons
+            if !self.isSample {
+                self.buttons
+            }
         }
     }
 

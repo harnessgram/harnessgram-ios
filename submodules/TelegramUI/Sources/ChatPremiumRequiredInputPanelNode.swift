@@ -122,7 +122,7 @@ final class ChatPremiumRequiredInputPanelNode: ChatInputPanelNode {
         ))))
         if let context = self.context {
             let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
-            if !premiumConfiguration.isPremiumDisabled {
+            if !premiumConfiguration.isPremiumPurchaseDisabled {
                 buttonContents.append(AnyComponentWithIdentity(id: 1, component: AnyComponent(MultilineTextComponent(
                     text: .plain(NSAttributedString(string: buttonSubtitle, font: Font.regular(13.0), textColor: params.interfaceState.theme.rootController.navigationBar.accentTextColor))
                 ))))

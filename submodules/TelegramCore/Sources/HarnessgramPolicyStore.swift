@@ -5,6 +5,12 @@ import HarnessgramSettings
 
 /// Device-local Phase 1 state. Accounts never share grandfathering or requests.
 public final class HarnessgramPolicyStore {
+    public enum AccountPrivacyConsent: String, Equatable {
+        case unknown
+        case granted
+        case declined
+    }
+
     public struct PendingRequest: Codable, Equatable {
         /// Namespaced peer id, or "invite:<sha256>" when Telegram withholds the peer id.
         public let id: String
@@ -137,9 +143,42 @@ public final class HarnessgramPolicyStore {
     private var contactsLoaded = Set<Int64>()
     private let revision = ValuePromise<Int>(0, ignoreRepeated: true)
     private var revisionValue = 0
+    private let accountPrivacyConsentChanges = ValuePipe<AccountRecordId>()
 
     public var updates: Signal<Int, NoError> {
         return self.revision.get()
+    }
+
+    private func accountPrivacyConsentKey(_ accountId: AccountRecordId) -> String {
+        return "Harnessgram.accountPrivacyConsent.v1.\(accountId.int64)"
+    }
+
+    /// Each local sign-in has its own record. No older filter setting implies consent.
+    public func accountPrivacyConsent(accountId: AccountRecordId) -> AccountPrivacyConsent {
+        return self.defaults.string(forKey: self.accountPrivacyConsentKey(accountId)).flatMap(AccountPrivacyConsent.init(rawValue:)) ?? .unknown
+    }
+
+    /// Called on the main thread, where the privacy bootstrap also starts its requests.
+    public func setAccountPrivacyConsent(_ consent: AccountPrivacyConsent, accountId: AccountRecordId) {
+        precondition(Thread.isMainThread)
+        guard consent != self.accountPrivacyConsent(accountId: accountId) else {
+            return
+        }
+        self.defaults.set(consent.rawValue, forKey: self.accountPrivacyConsentKey(accountId))
+        self.accountPrivacyConsentChanges.putNext(accountId)
+    }
+
+    func accountPrivacyConsentUpdates(accountId: AccountRecordId) -> Signal<AccountPrivacyConsent, NoError> {
+        return Signal { subscriber in
+            let disposable = self.accountPrivacyConsentChanges.signal().start(next: { changedAccountId in
+                if changedAccountId == accountId {
+                    subscriber.putNext(self.accountPrivacyConsent(accountId: accountId))
+                }
+            })
+            subscriber.putNext(self.accountPrivacyConsent(accountId: accountId))
+            return disposable
+        }
+        |> runOn(.mainQueue())
     }
 
     public init(defaults: UserDefaults = .standard, approved: HarnessgramPolicy.ApprovedChats? = nil, stickerPacks: HarnessgramPolicy.ApprovedStickerPacks? = nil, linkPreviewDomains: [String]? = nil, mediaLevels: [String: HarnessgramPolicy.MediaLevel]? = nil, filter: HarnessgramFilterSettings? = nil) {

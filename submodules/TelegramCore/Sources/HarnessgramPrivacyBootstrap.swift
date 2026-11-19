@@ -1,3 +1,5 @@
+import Foundation
+import HarnessgramSettings
 import Postbox
 import SwiftSignalKit
 internal import TelegramApi
@@ -11,7 +13,7 @@ extension HarnessgramPolicy.PrivacyRuleKind {
             self = .allowContacts
         case .privacyValueDisallowAll:
             self = .disallowAll
-        case .privacyValueDisallowContacts, .privacyValueDisallowUsers, .privacyValueDisallowChatParticipants:
+        case .privacyValueDisallowContacts, .privacyValueDisallowUsers, .privacyValueDisallowChatParticipants, .privacyValueDisallowBots:
             self = .disallowSome
         default:
             // Particular users or chats, close friends, Premium users, bots and any future rule.
@@ -20,92 +22,133 @@ extension HarnessgramPolicy.PrivacyRuleKind {
     }
 }
 
-/// Re-checked on every launch: only contacts may add the account to groups or call it, and new
-/// chats from non-contacts are archived and muted on the server. Anything else is set back. A
-/// failed request changes nothing and is retried on the next launch.
-func harnessgramEnforceStrangerPrivacy(account: Account) -> Signal<Never, NoError> {
-    guard HarnessgramPolicy.contactsOnlyPrivateChats else {
-        return .complete()
+func harnessgramRestrictedPrivacyRule(_ rules: [HarnessgramPolicy.PrivacyRuleKind]) -> Api.InputPrivacyRule? {
+    guard rules.contains(.allowAll) || rules.contains(.allowSome) else {
+        return nil
     }
-    let groupInvitations = harnessgramEnforceContactsOnly(account: account, key: .inputPrivacyKeyChatInvite, type: .groupInvitations)
-    let calls = harnessgramEnforceContactsOnly(account: account, key: .inputPrivacyKeyPhoneCall, type: .voiceCalls)
-
-    // Writing the global settings sends every field, so the stored copy is refreshed from the
-    // server first; if the server cannot be reached, nothing is written (other fields stay intact).
-    // Telegram offers archive-and-mute only to some accounts; when a write does not stick, that
-    // is logged once and not retried on later launches.
-    let accountPeerId = account.peerId
-    let strangerChats: Signal<Never, NoError>
-    if HarnessgramPolicyStore.shared.isStrangerArchiveUnavailable(accountPeerId: accountPeerId) {
-        strangerChats = .complete()
-    } else {
-        let reachable = account.network.request(Api.functions.account.getGlobalPrivacySettings())
-        |> map { _ -> Bool in
-            return true
-        }
-        |> `catch` { _ -> Signal<Bool, NoError> in
-            return .single(false)
-        }
-        let currentSettings = account.postbox.transaction { transaction -> GlobalPrivacySettings in
-            return fetchGlobalPrivacySettings(transaction: transaction)
-        }
-        strangerChats = reachable
-        |> mapToSignal { reachable -> Signal<Never, NoError> in
-            guard reachable else {
-                return .complete()
-            }
-            return _internal_updateGlobalPrivacySettings(account: account)
-            |> then(
-                currentSettings
-                |> mapToSignal { settings -> Signal<Never, NoError> in
-                    if HarnessgramPolicy.archivesStrangerChats(settings) {
-                        return .complete()
-                    }
-                    var settings = settings
-                    settings.automaticallyArchiveAndMuteNonContacts = true
-                    settings.keepArchivedUnmuted = true
-                    return _internal_updateGlobalPrivacySettings(account: account, settings: settings)
-                    |> then(_internal_updateGlobalPrivacySettings(account: account))
-                    |> then(
-                        currentSettings
-                        |> mapToSignal { settings -> Signal<Never, NoError> in
-                            if !HarnessgramPolicy.archivesStrangerChats(settings) {
-                                Logger.shared.log("Harnessgram", "Archive and mute for non-contacts is not available to this account; not retrying")
-                                HarnessgramPolicyStore.shared.markStrangerArchiveUnavailable(accountPeerId: accountPeerId)
-                            }
-                            return .complete()
-                        }
-                    )
-                }
-            )
-        }
-    }
-    return groupInvitations
-    |> then(calls)
-    |> then(strangerChats)
+    // Without an allow-all or allow-contacts baseline, Telegram defaults to Nobody.
+    let allowsContacts = rules.contains(.allowAll) || rules.contains(.allowContacts)
+    return allowsContacts ? .inputPrivacyValueAllowContacts : .inputPrivacyValueDisallowAll
 }
 
-private func harnessgramEnforceContactsOnly(account: Account, key: Api.InputPrivacyKey, type: UpdateSelectiveAccountPrivacySettingsType) -> Signal<Never, NoError> {
-    return account.network.request(Api.functions.account.getPrivacy(key: key))
+/// Runs a pass when both consent and the contacts-only rule are on, and disposes it when either turns off.
+func harnessgramAccountPrivacyBootstrap(
+    store: HarnessgramPolicyStore,
+    accountId: AccountRecordId,
+    apply: @escaping () -> Signal<Never, NoError>
+) -> Signal<Never, NoError> {
+    let filterChanges = Signal<Void, NoError> { subscriber in
+        // Other filter instances can update the same defaults.
+        let observer = NotificationCenter.default.addObserver(forName: HarnessgramFilterSettings.didChangeNotification, object: nil, queue: .main) { _ in
+            subscriber.putNext(())
+        }
+        subscriber.putNext(())
+        return ActionDisposable {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+    return combineLatest(store.accountPrivacyConsentUpdates(accountId: accountId), filterChanges)
+    |> runOn(.mainQueue())
+    |> map { consent, _ in consent == .granted && store.filter.isOn(.contactsOnly) }
+    |> distinctUntilChanged
+    |> mapToSignal { enabled -> Signal<Never, NoError> in
+        guard enabled else {
+            return .complete()
+        }
+        return deferred(apply)
+    }
+}
+
+func harnessgramEnforceStrangerPrivacy(account: Account) -> Signal<Never, NoError> {
+    let store = HarnessgramPolicyStore.shared
+    let accountId = account.id
+    let accountPeerId = account.peerId
+    let network = account.network
+    let postbox = account.postbox
+
+    return harnessgramAccountPrivacyBootstrap(store: store, accountId: accountId, apply: {
+        // Recheck before writing in case a rule change is still waiting to notify the main queue.
+        let canWrite = { store.filter.isOn(.contactsOnly) }
+        let privacyTypes: [UpdateSelectiveAccountPrivacySettingsType] = [
+            .phoneNumber, .presence, .profilePhoto, .voiceCalls, .groupInvitations
+        ]
+        let privacy = privacyTypes.reduce(Signal<Never, NoError>.complete()) { previous, type in
+            return previous |> then(deferred {
+                return harnessgramEnforceContactsOnly(network: network, type: type, canWrite: canWrite)
+            })
+        }
+        return privacy |> then(deferred {
+            guard !store.isStrangerArchiveUnavailable(accountPeerId: accountPeerId) else {
+                return .complete()
+            }
+            return harnessgramArchiveStrangerChats(postbox: postbox, network: network, canWrite: canWrite, unavailable: {
+                store.markStrangerArchiveUnavailable(accountPeerId: accountPeerId)
+            })
+        })
+    })
+}
+
+private func harnessgramEnforceContactsOnly(network: Network, type: UpdateSelectiveAccountPrivacySettingsType, canWrite: @escaping () -> Bool) -> Signal<Never, NoError> {
+    return network.request(Api.functions.account.getPrivacy(key: type.apiKey), automaticFloodWait: false)
     |> map(Optional.init)
     |> `catch` { _ -> Signal<Api.account.PrivacyRules?, NoError> in
         return .single(nil)
     }
+    |> deliverOnMainQueue
     |> mapToSignal { result -> Signal<Never, NoError> in
-        guard let result else {
+        guard case let .privacyRules(data)? = result else {
             return .complete()
         }
-        let rules: [Api.PrivacyRule]
-        switch result {
-        case let .privacyRules(data):
-            rules = data.rules
-        }
-        if HarnessgramPolicy.isContactsOnly(rules.map(HarnessgramPolicy.PrivacyRuleKind.init)) {
+        guard let rule = harnessgramRestrictedPrivacyRule(data.rules.map(HarnessgramPolicy.PrivacyRuleKind.init)), canWrite() else {
             return .complete()
         }
-        Logger.shared.log("Harnessgram", "Setting \(type) privacy back to contacts only")
-        return _internal_updateSelectiveAccountPrivacySettings(account: account, type: type, settings: HarnessgramPolicy.contactsOnlyPrivacy)
+        return network.request(Api.functions.account.setPrivacy(key: type.apiKey, rules: [rule]), automaticFloodWait: false)
+        |> `catch` { _ -> Signal<Api.account.PrivacyRules, NoError> in
+            return .complete()
+        }
+        |> deliverOnMainQueue
         |> ignoreValues
+    }
+}
+
+private func harnessgramArchiveStrangerChats(postbox: Postbox, network: Network, canWrite: @escaping () -> Bool, unavailable: @escaping () -> Void) -> Signal<Never, NoError> {
+    let archiveFlags: Int32 = (1 << 0) | (1 << 1)
+    return network.request(Api.functions.account.getGlobalPrivacySettings(), automaticFloodWait: false)
+    |> `catch` { _ -> Signal<Api.GlobalPrivacySettings, NoError> in
+        return .complete()
+    }
+    |> deliverOnMainQueue
+    |> mapToSignal { settings -> Signal<Never, NoError> in
+        let proposedSettings: Api.GlobalPrivacySettings
+        switch settings {
+        case let .globalPrivacySettings(data):
+            guard data.flags & archiveFlags != archiveFlags else {
+                return storeGlobalPrivacySettings(postbox: postbox, settings: settings)
+            }
+            // Preserve the other server fields and change only the two disclosed archive options.
+            proposedSettings = .globalPrivacySettings(.init(
+                flags: data.flags | archiveFlags,
+                noncontactPeersPaidStars: data.noncontactPeersPaidStars,
+                disallowedGifts: data.disallowedGifts
+            ))
+        }
+        guard canWrite() else {
+            return .complete()
+        }
+        return network.request(Api.functions.account.setGlobalPrivacySettings(settings: proposedSettings), automaticFloodWait: false)
+        |> `catch` { _ -> Signal<Api.GlobalPrivacySettings, NoError> in
+            return .complete()
+        }
+        |> deliverOnMainQueue
+        |> mapToSignal { updatedSettings -> Signal<Never, NoError> in
+            switch updatedSettings {
+            case let .globalPrivacySettings(data):
+                if data.flags & archiveFlags != archiveFlags {
+                    unavailable()
+                }
+            }
+            return storeGlobalPrivacySettings(postbox: postbox, settings: updatedSettings)
+        }
     }
 }
 

@@ -3,11 +3,13 @@ import HarnessgramSettingsUI
 import HarnessgramSettings
 import HarnessgramFonts
 import HarnessgramCockpitSync
+import HarnessgramCockpitKit
 import HarnessgramWatchLink
 import SwiftSignalKit
 import Display
 import TelegramCore
 import UserNotifications
+import WidgetKit
 import Intents
 import Postbox
 import PushKit
@@ -281,6 +283,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     private let badgeDisposable = MetaDisposable()
     private let quickActionsDisposable = MetaDisposable()
     private let harnessgramAccountDisposable = MetaDisposable()
+    private var sampleController: UIViewController?
+    private var openingSample = false
     private let harnessgramWatchDisposable = MetaDisposable()
     private let harnessgramNowPlayingDisposable = MetaDisposable()
     
@@ -709,6 +713,14 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
             return true
         }
+
+        // A process that was terminated while in the sample returns to the normal welcome flow.
+        if let sample = HarnessgramSampleStore.shared, FileManager.default.fileExists(atPath: sample.directory.path) {
+            self.eraseHarnessgramSample(sample)
+        }
+        Task { @MainActor in
+            await endHarnessgramSampleActivities()
+        }
         
         var isDebugConfiguration = false
         #if DEBUG
@@ -928,6 +940,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             } else {
                 return false
             }
+
         }, getTopWindow: {
             for window in application.allWindowSceneWindows.reversed() {
                 if window === self.window || window === statusBarHost.keyboardWindow {
@@ -1028,29 +1041,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }, dismissNativeController: {
             self.window?.rootViewController?.dismiss(animated: true, completion: nil)
         }, getAvailableAlternateIcons: {
-            if #available(iOS 10.3, *) {
-                var icons = [
-                    PresentationAppIcon(name: "BlueIcon", imageName: "BlueIcon", isDefault: buildConfig.isAppStoreBuild),
-                    PresentationAppIcon(name: "New2", imageName: "New2"),
-                    PresentationAppIcon(name: "New1", imageName: "New1"),
-                    PresentationAppIcon(name: "BlackIcon", imageName: "BlackIcon"),
-                    PresentationAppIcon(name: "BlueClassicIcon", imageName: "BlueClassicIcon"),
-                    PresentationAppIcon(name: "BlackClassicIcon", imageName: "BlackClassicIcon"),
-                    PresentationAppIcon(name: "BlueFilledIcon", imageName: "BlueFilledIcon"),
-                    PresentationAppIcon(name: "BlackFilledIcon", imageName: "BlackFilledIcon")
-                ]
-                if buildConfig.isInternalBuild {
-                    icons.append(PresentationAppIcon(name: "WhiteFilledIcon", imageName: "WhiteFilledIcon"))
-                }
-                
-                icons.append(PresentationAppIcon(name: "Premium", imageName: "Premium", isPremium: true))
-                icons.append(PresentationAppIcon(name: "PremiumTurbo", imageName: "PremiumTurbo", isPremium: true))
-                icons.append(PresentationAppIcon(name: "PremiumBlack", imageName: "PremiumBlack", isPremium: true))
-                
-                return icons
-            } else {
+            guard application.supportsAlternateIcons else {
                 return []
             }
+            return [
+                PresentationAppIcon(name: "AppIcon", imageName: "HarnessgramAppIconPreview", isDefault: true),
+                PresentationAppIcon(name: "HouseIcon", imageName: "HouseIcon")
+            ]
         }, getAlternateIconName: {
             if #available(iOS 10.3, *) {
                 return application.alternateIconName
@@ -1133,6 +1130,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             return true
         }
 
+        #if targetEnvironment(simulator)
         if harnessgramDemoSeedRequested() {
             NSLog("[HarnessgramDemo] seeding")
             let _ = (HarnessgramDemoSeed.seed(accountManager: accountManager, rootPath: rootPath, networkArguments: networkArguments, encryptionParameters: encryptionParameters, auxiliaryMethods: AccountAuxiliaryMethods(fetchResource: { _, _, _, _ in
@@ -1152,6 +1150,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             })
             return true
         }
+        #endif
 
         let pushRegistry = PKPushRegistry(queue: .main)
         if #available(iOS 9.0, *) {
@@ -1430,14 +1429,21 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 }
             }
             |> deliverOnMainQueue
-            |> map { accountAndSettings -> UnauthorizedApplicationContext? in
+            |> map { [weak weakSelf = self] accountAndSettings -> UnauthorizedApplicationContext? in
                 return accountAndSettings.flatMap { account, otherAccountPhoneNumbers in
-                    return UnauthorizedApplicationContext(apiId: buildConfig.apiId, apiHash: buildConfig.apiHash, sharedContext: sharedApplicationContext.sharedContext, account: account, otherAccountPhoneNumbers: otherAccountPhoneNumbers)
+                    let openSample: (() -> Void)?
+                    if otherAccountPhoneNumbers.0 == nil && otherAccountPhoneNumbers.1.isEmpty {
+                        openSample = { weakSelf?.openHarnessgramSample() }
+                    } else {
+                        openSample = nil
+                    }
+                    return UnauthorizedApplicationContext(apiId: buildConfig.apiId, apiHash: buildConfig.apiHash, sharedContext: sharedApplicationContext.sharedContext, account: account, otherAccountPhoneNumbers: otherAccountPhoneNumbers, openSample: openSample)
                 }
             }
         })
         
         let contextReadyDisposable = MetaDisposable()
+        let accountPrivacyPromptDisposable = MetaDisposable()
         
         let startTime = CFAbsoluteTimeGetCurrent()
         self.contextDisposable.set((self.context.get()
@@ -1458,8 +1464,20 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 contextValue.context.account.shouldKeepBackgroundDownloadConnections.set(.single(false))
             }
             self.crashReportPromptDisposable.set(nil)
+            accountPrivacyPromptDisposable.set(nil)
             self.contextValue = context
             if let context = context {
+                if firstTime, let sample = HarnessgramSampleStore.shared {
+                    do {
+                        try sample.markRealAccountActive()
+                    } catch {
+                        // Widgets and Siri still check for an active real account; the log says why the marker is missing.
+                        Logger.shared.log("Harnessgram", "Sample: could not mark the real account active: \(error.localizedDescription)")
+                    }
+                    if !self.openingSample {
+                        self.eraseHarnessgramSample(sample)
+                    }
+                }
                 setupLegacyComponents(context: context.context)
                 let isReady = context.isReady.get()
                 contextReadyDisposable.set((isReady
@@ -1503,6 +1521,22 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                         guard let appDelegate, let applicationContext, appDelegate.contextValue === applicationContext else { return }
                         appDelegate.mainWindow.present(controller, on: .root)
                     }))
+
+                    let accountId = context.context.account.id
+                    let store = HarnessgramPolicyStore.shared
+                    if store.accountPrivacyConsent(accountId: accountId) == .unknown,
+                       let appLockContext = context.context.sharedContext.appLockContext as? AppLockContextImpl {
+                        accountPrivacyPromptDisposable.set((appLockContext.isCurrentlyLocked
+                        |> deliverOnMainQueue
+                        |> filter { !$0 }
+                        |> take(1)).start(next: { [weak weakSelf = self, weak weakContext = context] _ in
+                            guard let self = weakSelf, let context = weakContext, self.contextValue === context,
+                                  store.accountPrivacyConsent(accountId: accountId) == .unknown else {
+                                return
+                            }
+                            context.rootController.pushViewController(harnessgramAccountPrivacyController(context: context.context, firstLaunch: true))
+                        }))
+                    }
                 }))
             } else {
                 self.mainWindow.viewController = nil
@@ -1642,9 +1676,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         self.harnessgramNowPlayingDisposable.set((self.context.get()
         |> deliverOnMainQueue).start(next: { context in
             HarnessgramRadioNowPlayingSource.shared.attach(context: context?.context, navigationController: context?.rootController)
+            #if targetEnvironment(simulator)
             if let context {
                 HarnessgramSimDemo.shared.start(context: context.context, navigationController: context.rootController)
             }
+            #endif
             // "מה חדש": once on the first launch of a new build, after the chat list is up.
             if let context = context?.context, let lines = HarnessgramWhatsNew.takePending() {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -2777,7 +2813,65 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
     #endif
     
+    private func eraseHarnessgramSample(_ sample: HarnessgramSampleStore) {
+        try? sample.erase()
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private func openHarnessgramSample() {
+        guard !self.openingSample, self.sampleController == nil, self.contextValue == nil,
+              let auth = self.authContextValue, let presenter = self.window?.rootViewController,
+              presenter.presentedViewController == nil else {
+            return
+        }
+        guard let store = HarnessgramSampleStore.shared else {
+            presenter.present(harnessgramSampleOpenError(), animated: true)
+            return
+        }
+        do {
+            try store.prepare()
+        } catch {
+            presenter.present(harnessgramSampleOpenError(), animated: true)
+            return
+        }
+        self.openingSample = true
+        self.currentCheckForUpdatesDisposable.set(nil)
+        auth.setWelcomeConnectionPaused(true)
+        let _ = (HarnessgramDemoSeed.openOfflineAccount(directory: store.directory)
+        |> deliverOnMainQueue).startStandalone(next: { [weak self, weak auth, weak presenter] chats in
+            guard let self else { return }
+            self.openingSample = false
+            let state = HarnessgramSampleStore.initialState()
+            do {
+                guard let chats, !chats.isEmpty, let auth, self.authContextValue === auth, self.contextValue == nil,
+                      let presenter, presenter.presentedViewController == nil else {
+                    throw CocoaError(.fileReadUnknown)
+                }
+                try store.write(state)
+                let controller = harnessgramSampleController(store: store, chats: chats, state: state, onExit: { [weak self, weak auth] in
+                    auth?.setWelcomeConnectionPaused(false)
+                    self?.sampleController?.dismiss(animated: true) {
+                        self?.sampleController = nil
+                    }
+                })
+                self.sampleController = controller
+                presenter.present(controller, animated: true)
+                WidgetCenter.shared.reloadAllTimelines()
+            } catch {
+                self.eraseHarnessgramSample(store)
+                auth?.setWelcomeConnectionPaused(false)
+                if let presenter, presenter.presentedViewController == nil {
+                    presenter.present(harnessgramSampleOpenError(), animated: true)
+                }
+            }
+        })
+    }
+
     private func openUrl(url: URL) {
+        // A stale sample widget or Live Activity cannot resolve into the real account or reenter the sample.
+        guard url != HarnessgramSampleStore.openURL, self.sampleController == nil, !self.openingSample else {
+            return
+        }
         let _ = (self.sharedContextPromise.get()
         |> take(1)
         |> mapToSignal { sharedApplicationContext -> Signal<(SharedAccountContextImpl, AuthorizedApplicationContext?, UnauthorizedApplicationContext?), NoError> in
@@ -3147,6 +3241,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
 
     private var openUrlInProgress: URL?
     private func openUrlWhenReady(accountId: AccountRecordId? = nil, url: URL, external: Bool = false) {
+        guard url != HarnessgramSampleStore.openURL, self.sampleController == nil, !self.openingSample else {
+            return
+        }
         self.openUrlInProgress = url
         
         let signal = self.sharedContextPromise.get()
@@ -3431,7 +3528,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     private func maybeCheckForUpdates() {
         #if targetEnvironment(simulator)
         #else
-        guard let buildConfig = self.buildConfig else {
+        guard self.sampleController == nil, !self.openingSample, let buildConfig = self.buildConfig else {
             return
         }
         let timestamp = CFAbsoluteTimeGetCurrent()

@@ -232,7 +232,8 @@ static const NSUInteger MTMaxUnacknowledgedMessageCount = 64;
             }
             MTShortLog(@"[MTProto#%p@%p resume]", self, _context);
             
-            [self setMtState:_mtState & (~MTProtoStatePaused)];
+            // The context may have cancelled discovery while this session was paused.
+            [self setMtState:_mtState & ~(MTProtoStatePaused | MTProtoStateAwaitingDatacenterScheme)];
             
             [self resetTransport];
             [self requestTransportTransaction];

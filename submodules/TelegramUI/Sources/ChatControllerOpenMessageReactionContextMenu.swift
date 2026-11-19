@@ -26,7 +26,9 @@ extension ChatControllerImpl {
         let context = self.context
         var replaceImpl: ((ViewController) -> Void)?
         let controller = PremiumDemoScreen(context: context, subject: .messageTags, action: {
-            let controller = PremiumIntroScreen(context: context, source: .messageTags)
+            guard let controller = PremiumIntroScreen(context: context, source: .messageTags) else {
+                return
+            }
             replaceImpl?(controller)
         })
         replaceImpl = { [weak controller] c in

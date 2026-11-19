@@ -5631,7 +5631,7 @@ public class CameraScreenImpl: ViewController, CameraScreen {
                 let controller = self.context.sharedContext.makePremiumLimitController(context: self.context, subject: subject, count: 10, forceDark: true, cancel: { [weak self] in
                     self?.requestDismiss(animated: true)
                 }, action: { [weak self] in
-                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: { [weak self] in
+                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: { [weak self] in
                         guard let self else {
                             return
                         }
@@ -5647,7 +5647,9 @@ public class CameraScreenImpl: ViewController, CameraScreen {
                                 self.requestDismiss(animated: true)
                             }
                         })
-                    })
+                    }) else {
+                        return false
+                    }
                     replaceImpl?(controller)
                     return true
                 })

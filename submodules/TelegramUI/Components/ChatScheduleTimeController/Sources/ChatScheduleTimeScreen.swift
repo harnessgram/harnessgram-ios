@@ -805,7 +805,9 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                                             elevatedLayout: false,
                                             action: { [weak environment] action in
                                                 if case .info = action {
-                                                    let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .nameColor, forceDark: false, dismissed: nil)
+                                                    guard let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .nameColor, forceDark: false, dismissed: nil) else {
+                                                        return false
+                                                    }
                                                     environment?.controller()?.push(controller)
                                                 }
                                                 return true

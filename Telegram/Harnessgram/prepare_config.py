@@ -8,6 +8,26 @@ from urllib.parse import urlsplit
 
 KEYS = {"agentProjectGroups", "bridgeOrigin", "bridgeHostSuffixes", "bridgeBotUsername", "relayHost", "relayPort", "roomArtAliases", "roomArtStorageKeys"}
 
+PUBLIC_DEFAULT_TYPES = {
+    "usernames": list,
+    "peerIds": list,
+    "stickerPackIds": list,
+    "stickerPackShortNames": list,
+    "linkPreviewDomains": list,
+    "mediaLevels": dict,
+    "agentProjectGroups": list,
+}
+
+
+def validate_public_defaults(default):
+    if not isinstance(default, dict) or any(
+        not isinstance(default.get(key), expected_type)
+        for key, expected_type in PUBLIC_DEFAULT_TYPES.items()
+    ):
+        raise ValueError("committed defaults must contain the expected approval fields")
+    if any(not isinstance(value, (list, dict)) or value for value in default.values()):
+        raise ValueError("committed defaults must contain only empty arrays and objects")
+
 
 def merge_config(default, override):
     if not isinstance(default, dict) or not isinstance(override, dict):
@@ -54,6 +74,7 @@ def main():
     args = parser.parse_args()
     try:
         public = json.loads(args.default.read_text(encoding="utf-8"))
+        validate_public_defaults(public)
         local = json.loads(args.override.read_text(encoding="utf-8")) if args.override else {}
         merged = merge_config(public, local)
     except (ValueError, OSError):

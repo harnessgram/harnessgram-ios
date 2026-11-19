@@ -338,7 +338,9 @@ final class ChatReportPeerTitlePanelNode: ChatTitleAccessoryPanelNode {
             guard let self, let navigationController else {
                 return
             }
-            let controller = PremiumIntroScreen(context: self.context, source: source)
+            guard let controller = PremiumIntroScreen(context: self.context, source: source) else {
+                return
+            }
             if let textView = self.emojiStatusTextNode?.view {
                 controller.sourceView = textView
                 controller.sourceRect = CGRect(origin: .zero, size: CGSize(width: textView.frame.height, height: textView.frame.height))

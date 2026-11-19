@@ -217,6 +217,8 @@ static MTDatacenterAuthInfoMapKeyStruct parseAuthInfoMapKeyInteger(NSNumber *key
     
     NSMutableDictionary *_transportSchemeDisposableByDatacenterId;
     id<MTDisposable> _backupAddressListDisposable;
+    bool _connectionPreparationPaused;
+    bool _explicitBackupAddressDiscoveryRequested;
     
     NSMutableDictionary<NSNumber *, id<MTDisposable> > *_fetchPublicKeysActions;
     
@@ -1207,6 +1209,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
     
 - (void)publicKeysForDatacenterWithIdRequired:(NSInteger)datacenterId {
     [[MTContext contextQueue] dispatchOnQueue:^{
+        if (_connectionPreparationPaused) return;
         if (_fetchPublicKeysActions[@(datacenterId)] == nil) {
             for (MTWeakContextChangeListener *value in _changeListeners) {
                 id<MTContextChangeListener> listener = value.target;
@@ -1310,6 +1313,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 {
     [[MTContext contextQueue] dispatchOnQueue:^
     {
+        if (_connectionPreparationPaused) return;
         if (_transportSchemeDisposableByDatacenterId == nil)
             _transportSchemeDisposableByDatacenterId = [[NSMutableDictionary alloc] init];
         id<MTDisposable> disposable = _transportSchemeDisposableByDatacenterId[@(datacenterId)];
@@ -1498,7 +1502,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 }
 
 - (void)_beginBackupAddressDiscoveryWithDelay:(double)delay {
-    if (_backupAddressListDisposable == nil && _discoverBackupAddressListSignal != nil) {
+    if (!_connectionPreparationPaused && _backupAddressListDisposable == nil && _discoverBackupAddressListSignal != nil) {
         __weak MTContext *weakSelf = self;
         _backupAddressListDisposable = [[[_discoverBackupAddressListSignal delay:delay onQueue:[MTQueue mainQueue]] onDispose:^{
             __strong MTContext *strongSelf = weakSelf;
@@ -1512,9 +1516,63 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 
 - (void)beginExplicitBackupAddressDiscovery {
     [[MTContext contextQueue] dispatchOnQueue:^{
+        _explicitBackupAddressDiscoveryRequested = true;
         [_backupAddressListDisposable dispose];
         _backupAddressListDisposable = nil;
         [self _beginBackupAddressDiscoveryWithDelay:0.0];
+    }];
+}
+
+- (void)setConnectionPreparationPaused:(bool)paused {
+    [[MTContext contextQueue] dispatchOnQueue:^{
+        if (_connectionPreparationPaused == paused) return;
+        _connectionPreparationPaused = paused;
+        if (!paused) {
+            [self _scheduleTempKeyRefresh];
+            if (_explicitBackupAddressDiscoveryRequested) {
+                [self _beginBackupAddressDiscoveryWithDelay:0.0];
+            }
+            return;
+        }
+
+        // Detach before cancelling: a completion arriving during cancellation cannot restart the work.
+        NSArray *authActions = _datacenterAuthActions.allValues;
+        NSArray *refreshActions = _tempKeyRefreshActions.allValues;
+        NSArray *addressActions = _discoverDatacenterAddressActions.allValues;
+        NSArray *transferActions = _datacenterTransferAuthActions.allValues;
+        [_datacenterAuthActions removeAllObjects];
+        [_tempKeyRefreshActions removeAllObjects];
+        [_discoverDatacenterAddressActions removeAllObjects];
+        [_datacenterTransferAuthActions removeAllObjects];
+        for (MTDatacenterAuthAction *action in authActions) [action cancel];
+        for (MTDatacenterAuthAction *action in refreshActions) [action cancel];
+        for (MTDiscoverDatacenterAddressAction *action in addressActions) {
+            action.delegate = nil;
+            [action cancel];
+        }
+        for (MTDatacenterTransferAuthAction *action in transferActions) {
+            action.delegate = nil;
+            [action cancel];
+        }
+        for (MTTimer *timer in _datacenterAuthRetryTimers.allValues) [timer invalidate];
+        for (MTTimer *timer in _datacenterTransferAuthRetryTimers.allValues) [timer invalidate];
+        [_datacenterAuthRetryTimers removeAllObjects];
+        [_datacenterTransferAuthRetryTimers removeAllObjects];
+        [_tempKeyRefreshTimer invalidate];
+        _tempKeyRefreshTimer = nil;
+
+        NSArray *transport = _transportSchemeDisposableByDatacenterId.allValues;
+        NSArray *keys = _fetchPublicKeysActions.allValues;
+        NSArray *logoutChecks = _datacenterCheckKeyRemovedActions.allValues;
+        [_transportSchemeDisposableByDatacenterId removeAllObjects];
+        [_fetchPublicKeysActions removeAllObjects];
+        [_datacenterCheckKeyRemovedActions removeAllObjects];
+        for (id<MTDisposable> action in transport) [action dispose];
+        for (id<MTDisposable> action in keys) [action dispose];
+        for (id<MTDisposable> action in logoutChecks) [action dispose];
+        id<MTDisposable> backup = _backupAddressListDisposable;
+        _backupAddressListDisposable = nil;
+        [backup dispose];
     }];
 }
 
@@ -1565,6 +1623,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 {
     [[MTContext contextQueue] dispatchOnQueue:^
     {
+        if (_connectionPreparationPaused) return;
         if (_discoverDatacenterAddressActions[@(datacenterId)] == nil)
         {
             MTDiscoverDatacenterAddressAction *discoverAction = [[MTDiscoverDatacenterAddressAction alloc] init];
@@ -1603,6 +1662,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 {
     [[MTContext contextQueue] dispatchOnQueue:^
     {
+        if (_connectionPreparationPaused) return;
         NSNumber *infoKey = authInfoMapIntegerKey((int32_t)datacenterId, selector);
         
         if (_datacenterAuthActions[infoKey] == nil && _datacenterAuthRetryTimers[infoKey] == nil)
@@ -1642,7 +1702,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 {
     [[MTContext contextQueue] dispatchOnQueue:^
     {
-        if (authToken == nil)
+        if (_connectionPreparationPaused || authToken == nil)
             return;
         
         if (_datacenterTransferAuthActions[@(datacenterId)] == nil && _datacenterTransferAuthRetryTimers[@(datacenterId)] == nil && masterDatacenterId != datacenterId)
@@ -1823,7 +1883,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 - (void)_scheduleTempKeyRefresh {
     [_tempKeyRefreshTimer invalidate];
     _tempKeyRefreshTimer = nil;
-    if (_tempKeyRefreshActions == nil) {
+    if (_connectionPreparationPaused || _tempKeyRefreshActions == nil) {
         return;
     }
     
@@ -1857,6 +1917,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 }
 
 - (void)_refreshExpiringTempKeys {
+    if (_connectionPreparationPaused) return;
     int64_t now = (int64_t)[NSDate date].timeIntervalSince1970;
     int32_t margin = [self _tempKeyRefreshMargin];
     for (NSNumber *infoKey in [_datacenterAuthInfoById allKeys]) {
@@ -1937,6 +1998,7 @@ static void copyKeychainDictionaryKey(NSString * _Nonnull group, NSString * _Non
 
 - (void)checkIfLoggedOut:(NSInteger)datacenterId {
     [[MTContext contextQueue] dispatchOnQueue:^{
+        if (_connectionPreparationPaused) return;
         MTDatacenterAuthInfo *authInfo = [self authInfoForDatacenterWithId:datacenterId selector:MTDatacenterAuthInfoSelectorPersistent];
         if (authInfo == nil || authInfo.authKey == nil) {
             return;

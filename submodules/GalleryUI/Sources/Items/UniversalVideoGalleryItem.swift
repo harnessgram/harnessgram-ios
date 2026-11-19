@@ -3412,7 +3412,9 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
     private func presentPremiumDemo() {
         var replaceImpl: ((ViewController) -> Void)?
         let controller = self.context.sharedContext.makePremiumDemoController(context: self.context, subject: .noAds, forceDark: true, action: {
-            let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .ads, forceDark: true, dismissed: nil)
+            guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .ads, forceDark: true, dismissed: nil) else {
+                return
+            }
             replaceImpl?(controller)
         }, dismissed: nil)
         replaceImpl = { [weak controller] c in
@@ -3477,7 +3479,9 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                 c?.dismiss(completion: {
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .noAds, forceDark: true, action: {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: true, dismissed: nil)
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: true, dismissed: nil) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     }, dismissed: nil)
                     replaceImpl = { [weak controller] c in

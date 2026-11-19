@@ -1152,7 +1152,9 @@ private final class PremiumBoostLevelsSheetComponent: CombinedComponent {
                                                 controller?.dismissAnimated()
                                                 
                                                 Queue.mainQueue().after(0.4) {
-                                                    let giftController = context.sharedContext.makePremiumGiftController(context: context, source: .channelBoost, completion: nil)
+                                                    guard let giftController = context.sharedContext.makePremiumGiftController(context: context, source: .channelBoost, completion: nil) else {
+                                                        return
+                                                    }
                                                     navigationController.pushViewController(giftController, animated: true)
                                                 }
                                             }
@@ -1177,7 +1179,9 @@ private final class PremiumBoostLevelsSheetComponent: CombinedComponent {
                                     if let navigationController = controller?.navigationController {
                                         controller?.dismissAnimated()
                                         
-                                        let premiumController = context.sharedContext.makePremiumIntroController(context: context, source: .channelBoost(peerId), forceDark: forceDark, dismissed: nil)
+                                        guard let premiumController = context.sharedContext.makePremiumIntroController(context: context, source: .channelBoost(peerId), forceDark: forceDark, dismissed: nil) else {
+                                            return
+                                        }
                                         navigationController.pushViewController(premiumController, animated: true)
                                     }
                                 })

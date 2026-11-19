@@ -385,7 +385,9 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
             } else if filters.count >= limit && !isPremium {
                 var replaceImpl: ((ViewController) -> Void)?
                 let controller = PremiumLimitScreen(context: context, subject: .folders, count: Int32(filters.count), action: {
-                    let controller = PremiumIntroScreen(context: context, source: .folders)
+                    guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                        return false
+                    }
                     replaceImpl?(controller)
                     return true
                 })
@@ -437,7 +439,9 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
             } else if filters.count >= limit && !isPremium {
                 var replaceImpl: ((ViewController) -> Void)?
                 let controller = PremiumLimitScreen(context: context, subject: .folders, count: Int32(filters.count), action: {
-                    let controller = PremiumIntroScreen(context: context, source: .folders)
+                    guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                        return false
+                    }
                     replaceImpl?(controller)
                     return true
                 })
@@ -561,7 +565,9 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
     }, updateDisplayTagsLocked: {
         var replaceImpl: ((ViewController) -> Void)?
         let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .folderTags, forceDark: false, action: {
-            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .folderTags, forceDark: false, dismissed: nil)
+            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .folderTags, forceDark: false, dismissed: nil) else {
+                return
+            }
             replaceImpl?(controller)
         }, dismissed: nil)
         replaceImpl = { [weak controller] c in
@@ -793,7 +799,9 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
                 let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                 presentControllerImpl?(UndoOverlayController(presentationData: presentationData, content: .universal(animation: "anim_reorder", scale: 0.05, colors: [:], title: nil, text: presentationData.strings.ChatListFolderSettings_SubscribeToMoveAll, customUndoText: presentationData.strings.ChatListFolderSettings_SubscribeToMoveAllAction, timeout: nil), elevatedLayout: false, animateInAsReplacement: false, action: { action in
                     if case .undo = action {
-                        pushControllerImpl?(PremiumIntroScreen(context: context, source: .folders))
+                        if let purchaseController = PremiumIntroScreen(context: context, source: .folders) {
+                            pushControllerImpl?(purchaseController)
+                        }
                     }
                     return false })
                 )

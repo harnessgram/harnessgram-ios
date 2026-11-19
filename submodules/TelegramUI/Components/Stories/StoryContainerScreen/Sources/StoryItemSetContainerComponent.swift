@@ -5227,7 +5227,9 @@ public final class StoryItemSetContainerComponent: Component {
                             let context = component.context
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = PremiumDemoScreen(context: context, subject: .uniqueReactions, forceDark: true, action: {
-                                let controller = PremiumIntroScreen(context: context, source: .reactions)
+                                guard let controller = PremiumIntroScreen(context: context, source: .reactions) else {
+                                    return
+                                }
                                 replaceImpl?(controller)
                             })
                             controller.disposed = { [weak self] in
@@ -5249,7 +5251,9 @@ public final class StoryItemSetContainerComponent: Component {
                             let context = component.context
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = PremiumDemoScreen(context: context, subject: .uniqueReactions, forceDark: true, action: {
-                                let controller = PremiumIntroScreen(context: context, source: .reactions)
+                                guard let controller = PremiumIntroScreen(context: context, source: .reactions) else {
+                                    return
+                                }
                                 replaceImpl?(controller)
                             })
                             controller.disposed = { [weak self] in
@@ -6011,7 +6015,9 @@ public final class StoryItemSetContainerComponent: Component {
                 return
             }
 
-            let controller = PremiumIntroScreen(context: component.context, source: .settings, forceDark: true)
+            guard let controller = PremiumIntroScreen(context: component.context, source: .settings, forceDark: true) else {
+                return
+            }
             self.sendMessageContext.actionSheet = controller
             controller.wasDismissed = { [weak self, weak controller] in
                 guard let self else {
@@ -6081,9 +6087,11 @@ public final class StoryItemSetContainerComponent: Component {
                 }
                 
                 var dismissedImpl: (() -> Void)?
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: source, forceDark: true, dismissed: {
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: source, forceDark: true, dismissed: {
                     dismissedImpl?()
-                })
+                }) else {
+                    return
+                }
                 self.sendMessageContext.actionSheet = controller
                 replaceImpl?(controller)
                 

@@ -359,7 +359,9 @@ public func oldChannelsController(context: AccountContext, updatedPresentationDa
                 if state.selectedPeers.count > 0 {
                     leaveActionImpl?()
                 } else {
-                    let controller = PremiumIntroScreen(context: context, source: .groupsAndChannels)
+                    guard let controller = PremiumIntroScreen(context: context, source: .groupsAndChannels) else {
+                        return
+                    }
                     pushImpl?(controller)
                 }
             })

@@ -225,7 +225,7 @@ extension HarnessSharedAccountContext {
     public func makeFilterSettingsController(context: AccountContext, modal: Bool, scrollToTags: Bool, dismissed: (() -> Void)?) -> ViewController {
         fatalError("harness: SharedAccountContext.makeFilterSettingsController is not provided")
     }
-    public func makeBusinessSetupScreen(context: AccountContext) -> ViewController {
+    public func makeBusinessSetupScreen(context: AccountContext) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeBusinessSetupScreen is not provided")
     }
     public func makeChatbotSetupScreen(context: AccountContext, initialData: ChatbotSetupScreenInitialData) -> ViewController {
@@ -342,7 +342,7 @@ extension HarnessSharedAccountContext {
     public func makeInstantPageController(context: AccountContext, message: EngineMessage, sourcePeerType: MediaAutoDownloadPeerType?) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeInstantPageController is not provided")
     }
-    public func makeInstantPageController(context: AccountContext, webPage: TelegramMediaWebpage, anchor: String?, sourceLocation: InstantPageSourceLocation) -> ViewController {
+    public func makeInstantPageController(context: AccountContext, webPage: TelegramMediaWebpage, anchor: String?, sourceLocation: InstantPageSourceLocation) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeInstantPageController is not provided")
     }
     public func openChatWallpaper(context: AccountContext, message: EngineMessage, present: @escaping (ViewController, Any?) -> Void) {
@@ -354,10 +354,10 @@ extension HarnessSharedAccountContext {
     public func makeChatQrCodeScreen(context: AccountContext, peer: EnginePeer, threadId: Int64?, temporary: Bool) -> ViewController {
         fatalError("harness: SharedAccountContext.makeChatQrCodeScreen is not provided")
     }
-    public func makePremiumIntroController(context: AccountContext, source: PremiumIntroSource, forceDark: Bool, dismissed: (() -> Void)?) -> ViewController {
+    public func makePremiumIntroController(context: AccountContext, source: PremiumIntroSource, forceDark: Bool, dismissed: (() -> Void)?) -> ViewController? {
         fatalError("harness: SharedAccountContext.makePremiumIntroController is not provided")
     }
-    public func makePremiumIntroController(sharedContext: SharedAccountContext, engine: TelegramEngineUnauthorized, inAppPurchaseManager: InAppPurchaseManager, source: PremiumIntroSource, proceed: (() -> Void)?) -> ViewController {
+    public func makePremiumIntroController(sharedContext: SharedAccountContext, engine: TelegramEngineUnauthorized, inAppPurchaseManager: InAppPurchaseManager, source: PremiumIntroSource, proceed: (() -> Void)?) -> ViewController? {
         fatalError("harness: SharedAccountContext.makePremiumIntroController is not provided")
     }
     public func makePremiumDemoController(context: AccountContext, subject: PremiumDemoSubject, forceDark: Bool, action: @escaping () -> Void, dismissed: (() -> Void)?) -> ViewController {
@@ -366,19 +366,19 @@ extension HarnessSharedAccountContext {
     public func makePremiumLimitController(context: AccountContext, subject: PremiumLimitSubject, count: Int32, forceDark: Bool, cancel: @escaping () -> Void, action: @escaping () -> Bool) -> ViewController {
         fatalError("harness: SharedAccountContext.makePremiumLimitController is not provided")
     }
-    public func makeStarsGiftController(context: AccountContext, birthdays: [EnginePeer.Id: TelegramBirthday]?, completion: @escaping (([EnginePeer.Id]) -> Void)) -> ViewController {
+    public func makeStarsGiftController(context: AccountContext, birthdays: [EnginePeer.Id: TelegramBirthday]?, completion: @escaping (([EnginePeer.Id]) -> Void)) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeStarsGiftController is not provided")
     }
-    public func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?, withdraw: ((StarGiftReference, String?) -> Signal<Never, WithdrawStarGiftError>)?) -> ViewController {
+    public func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?, withdraw: ((StarGiftReference, String?) -> Signal<Never, WithdrawStarGiftError>)?) -> ViewController? {
         fatalError("harness: SharedAccountContext.makePremiumGiftController is not provided")
     }
-    public func makeGiftOptionsController(context: AccountContext, peerId: EnginePeer.Id, premiumOptions: [CachedPremiumGiftOption], hasBirthday: Bool, completion: (() -> Void)?) -> ViewController {
+    public func makeGiftOptionsController(context: AccountContext, peerId: EnginePeer.Id, premiumOptions: [CachedPremiumGiftOption], hasBirthday: Bool, completion: (() -> Void)?) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeGiftOptionsController is not provided")
     }
-    public func makeGiftCollectiblesController(context: AccountContext, peerId: EnginePeer.Id) -> ViewController {
+    public func makeGiftCollectiblesController(context: AccountContext, peerId: EnginePeer.Id) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeGiftCollectiblesController is not provided")
     }
-    public func makeGiftStoreController(context: AccountContext, peerId: EnginePeer.Id, gift: StarGift.Gift) -> ViewController {
+    public func makeGiftStoreController(context: AccountContext, peerId: EnginePeer.Id, gift: StarGift.Gift) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeGiftStoreController is not provided")
     }
     public func makePremiumPrivacyControllerController(context: AccountContext, subject: PremiumPrivacySubject, peerId: EnginePeer.Id) -> ViewController {
@@ -456,7 +456,7 @@ extension HarnessSharedAccountContext {
     public func makeStarsTransactionsScreen(context: AccountContext, starsContext: StarsContext) -> ViewController {
         fatalError("harness: SharedAccountContext.makeStarsTransactionsScreen is not provided")
     }
-    public func makeStarsPurchaseScreen(context: AccountContext, starsContext: StarsContext, options: [Any], purpose: StarsPurchasePurpose, targetPeerId: EnginePeer.Id?, customTheme: PresentationTheme?, completion: @escaping (Int64) -> Void) -> ViewController {
+    public func makeStarsPurchaseScreen(context: AccountContext, starsContext: StarsContext, options: [Any], purpose: StarsPurchasePurpose, targetPeerId: EnginePeer.Id?, customTheme: PresentationTheme?, completion: @escaping (Int64) -> Void) -> ViewController? {
         fatalError("harness: SharedAccountContext.makeStarsPurchaseScreen is not provided")
     }
     public func makeStarsTransferScreen(context: AccountContext, starsContext: StarsContext, invoice: TelegramMediaInvoice, source: BotPaymentInvoiceSource, extendedMedia: [TelegramExtendedMedia], inputData: Signal<(StarsContext.State, BotPaymentForm, EnginePeer?, EnginePeer?)?, NoError>, completion: @escaping (Bool) -> Void) -> ViewController {

@@ -395,7 +395,7 @@ extension ChatControllerImpl {
             let premiumGiftOptions: [CachedPremiumGiftOption]
             
             var showPremiumGift = false
-            if !premiumConfiguration.isPremiumDisabled && self.presentationInterfaceState.disallowedGifts != TelegramDisallowedGifts.All {
+            if !premiumConfiguration.isPremiumPurchaseDisabled && self.presentationInterfaceState.disallowedGifts != TelegramDisallowedGifts.All {
                 if self.presentationInterfaceState.alwaysShowGiftButton {
                     showPremiumGift = true
                 } else if self.presentationInterfaceState.hasBirthdayToday {
@@ -981,7 +981,9 @@ extension ChatControllerImpl {
                         } else {
                             var replaceImpl: ((ViewController) -> Void)?
                             let demoController = strongSelf.context.sharedContext.makePremiumDemoController(context: strongSelf.context, subject: .todo, forceDark: false, action: {
-                                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .todo, forceDark: false, dismissed: nil)
+                                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .todo, forceDark: false, dismissed: nil) else {
+                                    return
+                                }
                                 replaceImpl?(controller)
                             }, dismissed: nil)
                             replaceImpl = { [weak self, weak demoController] c in
@@ -994,6 +996,9 @@ extension ChatControllerImpl {
                             return false
                         }
                     case .gift:
+                        guard PremiumConfiguration.allowsPurchases else {
+                            return false
+                        }
                         if let peer = strongSelf.presentationInterfaceState.renderedPeer?.peer, let starsContext = context.starsContext {
                             let premiumGiftOptions = strongSelf.presentationInterfaceState.premiumGiftOptions
                             if !premiumGiftOptions.isEmpty {
@@ -1447,7 +1452,9 @@ extension ChatControllerImpl {
                                         let context = strongSelf.context
                                         var replaceImpl: ((ViewController) -> Void)?
                                         let controller = PremiumLimitScreen(context: context, subject: .files, count: 2, action: {
-                                            replaceImpl?(PremiumIntroScreen(context: context, source: .upload))
+                                            if let purchaseController = PremiumIntroScreen(context: context, source: .upload) {
+                                                replaceImpl?(purchaseController)
+                                            }
                                             return true
                                         })
                                         replaceImpl = { [weak controller] c in
@@ -2559,7 +2566,9 @@ extension ChatControllerImpl {
             let context = self.context
             var replaceImpl: ((ViewController) -> Void)?
             let demoController = context.sharedContext.makePremiumDemoController(context: context, subject: .todo, forceDark: false, action: {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .todo, forceDark: false, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .todo, forceDark: false, dismissed: nil) else {
+                    return
+                }
                 replaceImpl?(controller)
             }, dismissed: nil)
             replaceImpl = { [weak demoController] c in

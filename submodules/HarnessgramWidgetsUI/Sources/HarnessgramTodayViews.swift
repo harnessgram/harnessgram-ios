@@ -19,15 +19,17 @@ struct HarnessgramTodayViewModel {
     /// No Cockpit login for this account: the widget asks to connect (and a tap opens the pairing link) instead of
     /// claiming there is nothing to do today.
     let needsPairing: Bool
+    let isSample: Bool
 
-    init(today: HarnessgramCockpitSnapshot.Today, strings: HarnessgramWidgetStrings.Today, bridgeOrigin: URL? = nil, needsPairing: Bool = false) {
+    init(today: HarnessgramCockpitSnapshot.Today, strings: HarnessgramWidgetStrings.Today, bridgeOrigin: URL? = nil, needsPairing: Bool = false, isSample: Bool = false) {
         self.strings = strings
         self.needsPairing = needsPairing
+        self.isSample = isSample
         self.progress = strings.progress(done: today.doneToday, total: today.totalToday)
         self.fractionDone = today.totalToday > 0 ? Double(today.doneToday) / Double(today.totalToday) : 0
         // Recheck cached snapshots from versions that accepted any HTTPS host.
         self.rows = today.waiting.prefix(HarnessgramCockpitSnapshot.Today.maxWaiting).compactMap { row in
-            guard let url = HarnessgramCockpitLinks.todayURL(row.url.absoluteString, bridgeOrigin: bridgeOrigin) else {
+            guard let url = isSample ? HarnessgramSampleStore.openURL : HarnessgramCockpitLinks.todayURL(row.url.absoluteString, bridgeOrigin: bridgeOrigin) else {
                 return nil
             }
             return Row(title: row.title, age: strings.age(minutes: row.ageMinutes), url: url)
@@ -59,6 +61,9 @@ struct HarnessgramTodayContent: View {
     }
 
     var tapURL: URL {
+        if self.model.isSample {
+            return HarnessgramSampleStore.openURL
+        }
         if self.model.needsPairing {
             return HarnessgramCockpitLinks.pairURL
         }
@@ -84,7 +89,7 @@ struct HarnessgramTodayContent: View {
                     .foregroundStyle(self.accent)
                     .widgetAccentable()
                     .accessibilityHidden(true)
-                Text(self.compact ? self.model.progress : self.model.strings.title)
+                Text(self.model.isSample ? HarnessgramWidgetStrings.sampleData : self.compact ? self.model.progress : self.model.strings.title)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }

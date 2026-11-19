@@ -625,14 +625,16 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                         guard let view, let component = view.component, let navigationController = component.controller()?.navigationController as? NavigationController else {
                             return
                         }
-                        let controller = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options, purpose: .sendMessage(peerId: peerId, requiredStars: totalAmount), targetPeerId: nil, customTheme: component.theme, completion: { stars in
+                        guard let controller = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options, purpose: .sendMessage(peerId: peerId, requiredStars: totalAmount), targetPeerId: nil, customTheme: component.theme, completion: { stars in
                             starsContext.add(balance: StarsAmount(value: stars, nanos: 0))
                             let _ = (starsContext.onUpdate
                             |> take(1)
                             |> deliverOnMainQueue).startStandalone(next: {
                                 completion()
                             })
-                        })
+                        }) else {
+                            return
+                        }
                         navigationController.pushViewController(controller)
                     })
                 } else {
@@ -2560,7 +2562,9 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                         let context = component.context
                                         var replaceImpl: ((ViewController) -> Void)?
                                         let controller = PremiumLimitScreen(context: context, subject: .files, count: 2, action: {
-                                            replaceImpl?(PremiumIntroScreen(context: context, source: .upload))
+                                            if let purchaseController = PremiumIntroScreen(context: context, source: .upload) {
+                                                replaceImpl?(purchaseController)
+                                            }
                                             return true
                                         })
                                         replaceImpl = { [weak controller] c in
@@ -4292,7 +4296,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
                     let customTheme = component.theme
                     let options = await component.context.engine.payments.starsTopUpOptions().get()
-                    let controller = component.context.sharedContext.makeStarsPurchaseScreen(
+                    guard let controller = component.context.sharedContext.makeStarsPurchaseScreen(
                         context: component.context,
                         starsContext: starsContext,
                         options: options,
@@ -4300,7 +4304,9 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                         targetPeerId: targetPeerId,
                         customTheme: customTheme,
                         completion: { _ in }
-                    )
+                    ) else {
+                        return
+                    }
                     navigationController.pushViewController(controller)
 
                     return
@@ -4545,7 +4551,9 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                     if case .undo = action {
                         view.endEditing(true)
 
-                        let introScreen = PremiumIntroScreen(context: component.context, source: .settings)
+                        guard let introScreen = PremiumIntroScreen(context: component.context, source: .settings) else {
+                            return false
+                        }
                         controller.push(introScreen)
                     }
                     return true

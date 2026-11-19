@@ -630,7 +630,7 @@ final class UserAppearanceScreenComponent: Component {
                         guard let self, let controller else {
                             return
                         }
-                        let purchaseController = component.context.sharedContext.makeStarsPurchaseScreen(
+                        guard let purchaseController = component.context.sharedContext.makeStarsPurchaseScreen(
                             context: component.context,
                             starsContext: starsContext,
                             options: options ?? [],
@@ -665,7 +665,9 @@ final class UserAppearanceScreenComponent: Component {
                                     });
                                 })
                             }
-                        )
+                        ) else {
+                            return
+                        }
                         controller.push(purchaseController)
                     })
                 } else if resellAmount.currency == .ton, let tonState = component.context.tonContext?.currentState, tonState.balance < resellAmount.amount {
@@ -742,7 +744,9 @@ final class UserAppearanceScreenComponent: Component {
                         if case .info = action {
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = component.context.sharedContext.makePremiumDemoController(context: component.context, subject: .colors, forceDark: false, action: {
-                                let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .nameColor, forceDark: false, dismissed: nil)
+                                guard let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .nameColor, forceDark: false, dismissed: nil) else {
+                                    return
+                                }
                                 replaceImpl?(controller)
                             }, dismissed: nil)
                             replaceImpl = { [weak controller] c in

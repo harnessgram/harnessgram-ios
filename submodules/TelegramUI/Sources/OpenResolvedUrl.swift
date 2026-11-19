@@ -1249,22 +1249,37 @@ private func openApprovedResolvedUrlImpl(
                 }
             }
         case let .premiumOffer(reference):
+            guard PremiumConfiguration.allowsPurchases else {
+                return
+            }
             dismissInput()
-            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .deeplink(reference), forceDark: false, dismissed: nil)
+            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .deeplink(reference), forceDark: false, dismissed: nil) else {
+                return
+            }
             if let navigationController = navigationController {
                 navigationController.pushViewController(controller, animated: true)
             }
         case let .premiumMultiGift(reference):
+            guard PremiumConfiguration.allowsPurchases else {
+                return
+            }
             dismissInput()
-            let controller = context.sharedContext.makePremiumGiftController(context: context, source: .deeplink(reference), completion: nil)
+            guard let controller = context.sharedContext.makePremiumGiftController(context: context, source: .deeplink(reference), completion: nil) else {
+                return
+            }
             if let navigationController = navigationController {
                 navigationController.pushViewController(controller, animated: true)
             }
         case let .starsTopup(amount, purpose):
+            guard PremiumConfiguration.allowsPurchases else {
+                return
+            }
             dismissInput()
             if let starsContext = context.starsContext {
                 let proceed = {
-                    let controller = context.sharedContext.makeStarsPurchaseScreen(context: context, starsContext: starsContext, options: [], purpose: amount.flatMap { .topUp(requiredStars: $0, purpose: purpose) } ?? .generic, targetPeerId: nil, customTheme: nil, completion: { _ in })
+                    guard let controller = context.sharedContext.makeStarsPurchaseScreen(context: context, starsContext: starsContext, options: [], purpose: amount.flatMap { .topUp(requiredStars: $0, purpose: purpose) } ?? .generic, targetPeerId: nil, customTheme: nil, completion: { _ in }) else {
+                        return
+                    }
                     if let navigationController = navigationController {
                         navigationController.pushViewController(controller, animated: true)
                     }
@@ -1488,8 +1503,10 @@ private func openApprovedResolvedUrlImpl(
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = context.sharedContext.makePremiumLimitController(context: context, subject: subject, count: 10, forceDark: false, cancel: {
                     }, action: {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: {
-                        })
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: {
+                        }) else {
+                            return false
+                        }
                         replaceImpl?(controller)
                         return true
                     })
@@ -1857,7 +1874,9 @@ private func openApprovedResolvedUrlImpl(
                         } else {
                             fromPeerId = context.account.peerId
                         }
-                        let controller = PremiumIntroScreen(context: context, source: .gift(from: fromPeerId, to: toPeerId, duration: giftCode.months, giftCode: giftCode))
+                        guard let controller = PremiumIntroScreen(context: context, source: .gift(from: fromPeerId, to: toPeerId, duration: giftCode.months, giftCode: giftCode)) else {
+                            return
+                        }
                         navigationController?.pushViewController(controller)
                     } else {
                         var dismissImpl: (() -> Void)?
@@ -1878,7 +1897,9 @@ private func openApprovedResolvedUrlImpl(
                                 }, completed: {
                                     dismissImpl?()
                                     
-                                    let controller = PremiumIntroScreen(context: context, source: .settings, forceDark: forceDark, forceHasPremium: true)
+                                    guard let controller = PremiumIntroScreen(context: context, source: .settings, forceDark: forceDark, forceHasPremium: true) else {
+                                        return
+                                    }
                                     navigationController?.pushViewController(controller)
                                     Queue.mainQueue().after(0.3, {
                                         controller.animateSuccess()
@@ -2075,16 +2096,23 @@ private func openApprovedResolvedUrlImpl(
                 navigationController?.pushViewController(controller)
             }
         case let .sendGift(peerId):
+            guard PremiumConfiguration.allowsPurchases else {
+                return
+            }
             Task { @MainActor [weak navigationController] in
                 if let peerId {
                     let giftOptions = await (context.engine.payments.premiumGiftCodeOptions(peerId: nil, onlyCached: true) |> filter { !$0.isEmpty }).get()
                     
                     let premiumOptions = giftOptions.filter { $0.users == 1 }.map { CachedPremiumGiftOption(months: $0.months, currency: $0.currency, amount: $0.amount, botUrl: "", storeProductId: $0.storeProductId) }
-                    let controller = context.sharedContext.makeGiftOptionsController(context: context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: false, completion: nil)
+                    guard let controller = context.sharedContext.makeGiftOptionsController(context: context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: false, completion: nil) else {
+                        return
+                    }
                     controller.navigationPresentation = .modal
                     navigationController?.pushViewController(controller)
                 } else {
-                    let controller = context.sharedContext.makePremiumGiftController(context: context, source: .settings(nil), completion: nil)
+                    guard let controller = context.sharedContext.makePremiumGiftController(context: context, source: .settings(nil), completion: nil) else {
+                        return
+                    }
                     navigationController?.pushViewController(controller)
                 }
             }

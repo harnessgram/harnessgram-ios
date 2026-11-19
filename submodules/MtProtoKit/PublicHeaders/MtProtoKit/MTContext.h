@@ -178,6 +178,9 @@
 
 - (void)beginExplicitBackupAddressDiscovery;
 
+/// Cancels in-flight connection preparation and suppresses new preparation while a caller pauses its sessions.
+- (void)setConnectionPreparationPaused:(bool)paused;
+
 - (void)checkIfLoggedOut:(NSInteger)datacenterId;
 
 @end

@@ -8,17 +8,25 @@ another platform. This decision ignores server allow/ignore settings and age ver
 Other restriction reasons retain their existing behavior. Sensitive bubbles reuse
 **Media hidden**; ordinary sensitive-message captions remain text.
 
-Telegram's `sensitiveContentEnabled = true` means **disable filtering**. Both the public
-configuration getters and the remote setter enforce `false`. The Data and Storage
+Telegram's `sensitiveContentEnabled = true` means **disable filtering**. The public
+configuration getters report `false` while the local rule is active. The Data and Storage
 switch is omitted and its callback is guarded; the in-chat age/reveal callback also
 returns without revealing or changing account settings. The pre-existing settings
 search entry is already invisible and cannot expose the guarded row.
 
-Once per main-account initialization (new login and existing account startup), a managed,
-account-lifetime operation reads the server capability and requests
-`account.setContentSettings(flags: 0)` if `canAdjustSensitiveContent` is set. There is
-no polling/retry loop added. API refusal, lack of capability or a failed read leaves
-local enforcement active. This sandbox did not contact or update any server.
+Main-account initialization applies the sensitive-content rule on this device. The
+server configuration stays as the account owner set it. The explicit Telegram
+settings update also checks the local rule when subscribing, covering a rule change
+while a confirmation is open.
+
+Separate account-level privacy changes require consent for each local sign-in and
+the contacts-only private chats rule. A pass starts when the app opens with both
+active or when both become active during a session. It narrows the disclosed
+privacy settings and attempts the disclosed archive options. A Nobody setting
+with allow exceptions becomes Nobody without exceptions. Withdrawing consent or
+turning off the rule stops new requests from the pass. Requests already sent may
+complete and earlier changes remain editable in Telegram. The choice is accessible
+from Filter settings.
 
 ## Download and cache boundary
 
@@ -49,9 +57,8 @@ display guards do not decode/display them for a sensitive message.
 | Boundary | Source |
 | --- | --- |
 | Switch, hidden media and reference/resource policy | `submodules/TelegramCore/Sources/HarnessgramPolicy.swift:77` |
-| Effective ignored reasons, setting reads and server writes | `submodules/TelegramCore/Sources/Settings/ContentSettings.swift:9` |
-| One server-filter attempt and capability check | `submodules/TelegramCore/Sources/Settings/ContentSettings.swift:115` |
-| Main-account lifecycle | `submodules/TelegramCore/Sources/Account/Account.swift:1509` |
+| Effective ignored reasons, setting reads and local guard on the explicit update | `submodules/TelegramCore/Sources/Settings/ContentSettings.swift` |
+| Account privacy opt-in | `submodules/TelegramCore/Sources/HarnessgramPrivacyBootstrap.swift` |
 | All-platform sensitive/porn classification | `submodules/TelegramCore/Sources/Utils/PeerUtils.swift:19` |
 | Message reference propagation and optional persistence | `submodules/TelegramCore/Sources/SyncCore/SyncCore_MediaReference.swift:6` |
 | Data and Storage row and action | `submodules/SettingsUI/Sources/Data and Storage/DataAndStorageSettingsController.swift:644`, `:888` |
@@ -86,8 +93,7 @@ Existing slice-2 consumers gain the sensitive decision through the shared policy
 - The latest-message check runs before a resource transfer starts. It does not retroactively
   cancel a transfer already running before a new restriction arrives or purge existing
   cached bytes; rendering guards cover the listed display surfaces.
-- The server setting is best effort, account-wide and can affect other Telegram clients.
-  Another client can later change it; this app's local decision remains forced.
+- Sensitive-content settings changed in another client leave this app's local policy in force.
 - No signing, bundle IDs, entitlements, generated localization or build graph changed.
 
 Run `//submodules/TelegramCore:TelegramCoreTests`. Before recording,
@@ -95,6 +101,5 @@ the expected visible results are: no sensitive thumbnail/blur at any point; a **
 hidden** bubble; captions retained as plain text; a tap cannot reveal or start a download;
 the settings switch is absent. Check light/dark, cold/warm cache, mixed albums, reply
 thumbnails, adjacent gallery items, chat list and both profile-grid modes. Record and
-inspect labelled frames per AGENTS.md; verify attachment requests separately. Check a
-server that initially allows sensitive content, both server capability values, and an
-offline/failed request.
+inspect labelled frames per AGENTS.md; verify attachment requests separately. Check
+that the local rule still applies when Telegram allows sensitive content for the account.

@@ -2177,7 +2177,9 @@ extension ChatControllerImpl {
                         let context = strongSelf.context
                         var replaceImpl: ((ViewController) -> Void)?
                         let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .animatedEmoji, forceDark: false, action: {
-                            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil)
+                            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil) else {
+                                return
+                            }
                             replaceImpl?(controller)
                         }, dismissed: nil)
                         replaceImpl = { [weak controller] c in
@@ -2548,7 +2550,9 @@ extension ChatControllerImpl {
             })
             
             if !self.presentationInterfaceState.isPremium {
-                let controller = PremiumIntroScreen(context: self.context, source: .settings)
+                guard let controller = PremiumIntroScreen(context: self.context, source: .settings) else {
+                    return
+                }
                 self.push(controller)
                 return
             }
@@ -3546,7 +3550,9 @@ extension ChatControllerImpl {
                                     strongSelf.presentInGlobalOverlay(UndoOverlayController(presentationData: strongSelf.presentationData, content: .sticker(context: strongSelf.context, file: stickerFile, loop: true, title: strongSelf.presentationData.strings.Premium_MaxFavedStickersTitle("\(limit)").string, text: text, undoText: nil, customAction: nil), elevatedLayout: true, action: { [weak self] action in
                                         if let strongSelf = self {
                                             if case .info = action {
-                                                let controller = PremiumIntroScreen(context: strongSelf.context, source: .savedStickers)
+                                                guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .savedStickers) else {
+                                                    return false
+                                                }
                                                 strongSelf.push(controller)
                                                 return true
                                             }
@@ -4148,7 +4154,9 @@ extension ChatControllerImpl {
                         if case .undo = action {
                             strongSelf.chatDisplayNode.dismissTextInput()
                             
-                            let controller = PremiumIntroScreen(context: strongSelf.context, source: .settings)
+                            guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .settings) else {
+                                return false
+                            }
                             strongSelf.push(controller)
                         }
                         return true
@@ -4397,7 +4405,7 @@ extension ChatControllerImpl {
                     let _ = ApplicationSpecificNotice.incrementDismissedPremiumGiftSuggestion(accountManager: self.context.sharedContext.accountManager, peerId: peerId, timestamp: Int32(Date().timeIntervalSince1970)).startStandalone()
                 }
             } else {
-                let controller = self.context.sharedContext.makeGiftOptionsController(context: self.context, peerId: peerId, premiumOptions: [], hasBirthday: false, completion: { [weak self] in
+                guard let controller = self.context.sharedContext.makeGiftOptionsController(context: self.context, peerId: peerId, premiumOptions: [], hasBirthday: false, completion: { [weak self] in
                     guard let self, let peer = self.presentationInterfaceState.renderedPeer?.peer else {
                         return
                     }
@@ -4412,7 +4420,9 @@ extension ChatControllerImpl {
                     ) {
                         self.push(controller)
                     }
-                })
+                }) else {
+                    return
+                }
                 self.push(controller)
             }
         }, openSuggestPost: { [weak self] message, mode in
@@ -4499,7 +4509,9 @@ extension ChatControllerImpl {
             guard let self else {
                 return
             }
-            let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .messageTags, forceDark: false, dismissed: nil)
+            guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .messageTags, forceDark: false, dismissed: nil) else {
+                return
+            }
             self.push(controller)
         }, openStarsPurchase: { [weak self] requiredStars in
             guard let self, let starsContext = self.context.starsContext else {
@@ -4511,8 +4523,10 @@ extension ChatControllerImpl {
                 guard let self else {
                     return
                 }
-                let controller = self.context.sharedContext.makeStarsPurchaseScreen(context: self.context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { _ in
-                })
+                guard let controller = self.context.sharedContext.makeStarsPurchaseScreen(context: self.context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { _ in
+                }) else {
+                    return
+                }
                 self.push(controller)
             })
         }, openMessagePayment: {
@@ -4885,7 +4899,9 @@ extension ChatControllerImpl {
                     let context = self.context
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .fasterDownload, forceDark: false, action: {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .fasterDownload, forceDark: false, dismissed: nil)
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .fasterDownload, forceDark: false, dismissed: nil) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     }, dismissed: nil)
                     replaceImpl = { [weak controller] c in

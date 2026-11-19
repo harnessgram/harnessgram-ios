@@ -1181,12 +1181,14 @@ final class ComposeTodoScreenComponent: Component {
                         guard let self, let component = self.component else {
                             return
                         }
-                        let controller = component.context.sharedContext.makePremiumIntroController(
+                        guard let controller = component.context.sharedContext.makePremiumIntroController(
                             context: component.context,
                             source: .chatsPerFolder,
                             forceDark: false,
                             dismissed: nil
-                        )
+                        ) else {
+                            return
+                        }
                         (self.environment?.controller() as? AttachmentContainable)?.parentController()?.push(controller)
                     }
                 ))

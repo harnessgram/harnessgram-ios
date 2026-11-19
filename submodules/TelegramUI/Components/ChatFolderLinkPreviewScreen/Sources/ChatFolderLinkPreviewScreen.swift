@@ -1163,7 +1163,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                         guard let navigationController else {
                             return true
                         }
-                        navigationController.pushViewController(PremiumIntroScreen(context: component.context, source: .folders))
+                        if let purchaseController = PremiumIntroScreen(context: component.context, source: .folders) {
+                            navigationController.pushViewController(purchaseController)
+                        }
                         return true
                     })
                     controller.push(limitController)
@@ -1173,7 +1175,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                         guard let navigationController else {
                             return true
                         }
-                        navigationController.pushViewController(PremiumIntroScreen(context: component.context, source: .membershipInSharedFolders))
+                        if let purchaseController = PremiumIntroScreen(context: component.context, source: .membershipInSharedFolders) {
+                            navigationController.pushViewController(purchaseController)
+                        }
                         return true
                     })
                     controller.push(limitController)
@@ -1183,7 +1187,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                         guard let navigationController else {
                             return true
                         }
-                        navigationController.pushViewController(PremiumIntroScreen(context: component.context, source: .chatsPerFolder))
+                        if let purchaseController = PremiumIntroScreen(context: component.context, source: .chatsPerFolder) {
+                            navigationController.pushViewController(purchaseController)
+                        }
                         return true
                     })
                     controller.push(limitController)
@@ -1193,7 +1199,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                         guard let navigationController else {
                             return true
                         }
-                        navigationController.pushViewController(PremiumIntroScreen(context: component.context, source: .groupsAndChannels))
+                        if let purchaseController = PremiumIntroScreen(context: component.context, source: .groupsAndChannels) {
+                            navigationController.pushViewController(purchaseController)
+                        }
                         return true
                     })
                     controller.push(limitController)
@@ -1349,7 +1357,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                                     guard let navigationController else {
                                         return true
                                     }
-                                    navigationController.pushViewController(PremiumIntroScreen(context: context, source: .membershipInSharedFolders))
+                                    if let purchaseController = PremiumIntroScreen(context: context, source: .membershipInSharedFolders) {
+                                        navigationController.pushViewController(purchaseController)
+                                    }
                                     return true
                                 })
                                 controller.push(limitController)
@@ -1359,7 +1369,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                                     guard let navigationController else {
                                         return true
                                     }
-                                    navigationController.pushViewController(PremiumIntroScreen(context: component.context, source: .linksPerSharedFolder))
+                                    if let purchaseController = PremiumIntroScreen(context: component.context, source: .linksPerSharedFolder) {
+                                        navigationController.pushViewController(purchaseController)
+                                    }
                                     return true
                                 })
                                 controller.push(limitController)
@@ -1369,7 +1381,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                                     guard let navigationController else {
                                         return true
                                     }
-                                    navigationController.pushViewController(PremiumIntroScreen(context: component.context, source: .chatsPerFolder))
+                                    if let purchaseController = PremiumIntroScreen(context: component.context, source: .chatsPerFolder) {
+                                        navigationController.pushViewController(purchaseController)
+                                    }
                                     return true
                                 })
                                 controller.push(limitController)
@@ -1380,7 +1394,9 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                                     guard let navigationController else {
                                         return true
                                     }
-                                    navigationController.pushViewController(PremiumIntroScreen(context: component.context, source: .groupsAndChannels))
+                                    if let purchaseController = PremiumIntroScreen(context: component.context, source: .groupsAndChannels) {
+                                        navigationController.pushViewController(purchaseController)
+                                    }
                                     return true
                                 })
                                 controller.push(limitController)

@@ -1512,7 +1512,7 @@ private final class GiftAuctionBidScreenComponent: Component {
         
         private var isLoading = false
         private func commitBid(value: Int64) {
-            guard let component = self.component, let environment = self.environment, let controller = self.environment?.controller(), let balance = self.balance, case let .generic(gift) = component.gift else {
+            guard PremiumConfiguration.allowsPurchases, let component = self.component, let environment = self.environment, let controller = self.environment?.controller(), let balance = self.balance, case let .generic(gift) = component.gift else {
                 return
             }
             
@@ -1543,10 +1543,12 @@ private final class GiftAuctionBidScreenComponent: Component {
                     }
                     
                     let purchasePurpose: StarsPurchasePurpose = .generic
-                    let purchaseScreen = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options, purpose: purchasePurpose, targetPeerId: nil, customTheme: environment.theme, completion: { result in
+                    guard let purchaseScreen = component.context.sharedContext.makeStarsPurchaseScreen(context: component.context, starsContext: starsContext, options: options, purpose: purchasePurpose, targetPeerId: nil, customTheme: environment.theme, completion: { result in
                         let _ = result
                         //TODO:release
-                    })
+                    }) else {
+                        return
+                    }
                     self.environment?.controller()?.push(purchaseScreen)
                     self.environment?.controller()?.dismiss()
                 })
@@ -1963,7 +1965,7 @@ private final class GiftAuctionBidScreenComponent: Component {
                             let _ = (context.engine.payments.starsTopUpOptions()
                             |> take(1)
                             |> deliverOnMainQueue).startStandalone(next: { options in
-                                let controller = context.sharedContext.makeStarsPurchaseScreen(
+                                guard let controller = context.sharedContext.makeStarsPurchaseScreen(
                                     context: context,
                                     starsContext: starsContext,
                                     options: options,
@@ -1971,7 +1973,9 @@ private final class GiftAuctionBidScreenComponent: Component {
                                     targetPeerId: nil,
                                     customTheme: environment.theme,
                                     completion: { _ in }
-                                )
+                                ) else {
+                                    return
+                                }
                                 navigationController.pushViewController(controller)
                             })
                         }
@@ -2993,7 +2997,10 @@ private final class GiftAuctionBidScreenComponent: Component {
             var formattedAmount = presentationStringsFormattedNumber(Int32(clamping: self.amount.realValue), environment.dateTimeFormat.groupingSeparator)
             let buttonString: String
             let buttonId: String
-            if let myBidAmount = self.giftAuctionState?.myState.bidAmount {
+            if !PremiumConfiguration.allowsPurchases {
+                buttonString = environment.strings.Common_OK
+                buttonId = "ok"
+            } else if let myBidAmount = self.giftAuctionState?.myState.bidAmount {
                 if myBidAmount == self.amount.realValue {
                     buttonString = environment.strings.Common_OK
                     buttonId = "ok"
@@ -3036,7 +3043,11 @@ private final class GiftAuctionBidScreenComponent: Component {
                         guard let self else {
                             return
                         }
-                        self.commitBid(value: Int64(self.amount.realValue))
+                        if PremiumConfiguration.allowsPurchases {
+                            self.commitBid(value: Int64(self.amount.realValue))
+                        } else {
+                            self.environment?.controller()?.dismiss()
+                        }
                     }
                 )),
                 environment: {},

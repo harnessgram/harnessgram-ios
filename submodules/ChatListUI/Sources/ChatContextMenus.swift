@@ -327,7 +327,9 @@ func chatContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, promoI
                                                     } else if count >= limit && !isPremium {
                                                         var replaceImpl: ((ViewController) -> Void)?
                                                         let controller = PremiumLimitScreen(context: context, subject: .chatsPerFolder, count: Int32(count), action: {
-                                                            let controller = PremiumIntroScreen(context: context, source: .chatsPerFolder)
+                                                            guard let controller = PremiumIntroScreen(context: context, source: .chatsPerFolder) else {
+                                                                return false
+                                                            }
                                                             replaceImpl?(controller)
                                                             return true
                                                         })
@@ -436,7 +438,9 @@ func chatContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, promoI
                                             if case .filter = location {
                                                 var replaceImpl: ((ViewController) -> Void)?
                                                 let controller = PremiumLimitScreen(context: context, subject: .chatsPerFolder, count: Int32(count), action: {
-                                                    let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats)
+                                                    guard let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats) else {
+                                                        return false
+                                                    }
                                                     replaceImpl?(premiumScreen)
                                                     return true
                                                 })
@@ -447,7 +451,9 @@ func chatContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, promoI
                                             } else {
                                                 var replaceImpl: ((ViewController) -> Void)?
                                                 let controller = PremiumLimitScreen(context: context, subject: .pins, count: Int32(count), action: {
-                                                    let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats)
+                                                    guard let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats) else {
+                                                        return false
+                                                    }
                                                     replaceImpl?(premiumScreen)
                                                     return true
                                                 })
@@ -1024,7 +1030,9 @@ public func savedMessagesPeerMenuItems(context: AccountContext, threadId: Int64,
                 case let .limitReached(count):
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = PremiumLimitScreen(context: context, subject: .pinnedSavedPeers, count: Int32(count), action: {
-                        let controller = PremiumIntroScreen(context: context, source: .pinnedChats)
+                        guard let controller = PremiumIntroScreen(context: context, source: .pinnedChats) else {
+                            return false
+                        }
                         replaceImpl?(controller)
                         return true
                     })

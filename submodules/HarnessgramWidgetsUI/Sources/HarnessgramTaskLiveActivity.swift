@@ -521,7 +521,7 @@ public struct HarnessgramTaskLiveActivityWidgetWithSupplementalFamilies: Widget 
 private func harnessgramTaskActivityConfiguration() -> some WidgetConfiguration {
     return ActivityConfiguration(for: HarnessgramTaskActivityAttributes.self) { context in
         HarnessgramTaskActivityContent(state: context.state, isStale: context.isStale)
-            .widgetURL(HarnessgramCockpitLinks.openURL)
+            .widgetURL(context.attributes.cardId.hasPrefix(HarnessgramSampleStore.activityIDPrefix) ? HarnessgramSampleStore.openURL : HarnessgramCockpitLinks.openURL)
     } dynamicIsland: { context in
         // The island is always black; the standard palette passes AA on black too.
         let palette = HarnessgramTaskActivityPalette.standard
@@ -607,7 +607,7 @@ private func harnessgramTaskActivityConfiguration() -> some WidgetConfiguration 
             .padding(HarnessgramTaskActivityLayout.minimalInset)
         }
         .contentMargins(.horizontal, HarnessgramTaskActivityLayout.outer, for: .expanded)
-        .widgetURL(HarnessgramCockpitLinks.openURL)
+        .widgetURL(context.attributes.cardId.hasPrefix(HarnessgramSampleStore.activityIDPrefix) ? HarnessgramSampleStore.openURL : HarnessgramCockpitLinks.openURL)
         .keylineTint(accent)
     }
     .configurationDisplayName(HarnessgramWidgetStrings.activityGalleryName)

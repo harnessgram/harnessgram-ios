@@ -31,7 +31,7 @@ public final class AuthorizationSequenceSplashController: ViewController {
     
     private let startButton: SolidRoundedButtonNode
     
-    init(accountManager: AccountManager<TelegramAccountManagerTypes>, account: UnauthorizedAccount, theme: PresentationTheme) {
+    init(accountManager: AccountManager<TelegramAccountManagerTypes>, account: UnauthorizedAccount, theme: PresentationTheme, openSample: (() -> Void)?) {
         self.accountManager = accountManager
         self.account = account
         self.theme = theme
@@ -108,6 +108,26 @@ public final class AuthorizationSequenceSplashController: ViewController {
             let _ = self?.startButton.updateLayout(width: width, transition: .immediate)
             return self?.startButton.view
         }
+        if let openSample {
+            let button = UIButton(type: .system)
+            button.tintColor = theme.list.itemAccentColor
+            button.titleLabel?.font = .preferredFont(forTextStyle: .subheadline)
+            button.titleLabel?.adjustsFontSizeToFitWidth = true
+            button.titleLabel?.minimumScaleFactor = 0.75
+            button.accessibilityIdentifier = "Auth.Welcome.SampleButton"
+            button.addAction(UIAction { [weak self] _ in
+                guard let self, self.navigationController?.viewControllers.last === self,
+                      self.controller.isEnabled else { return }
+                openSample()
+            }, for: .touchUpInside)
+            self.controller.secondaryStartButton = button
+        }
+    }
+
+    func updateSampleLanguage(_ languageCode: String) {
+        guard let button = self.controller.secondaryStartButton as? UIButton else { return }
+        button.setTitle(AuthorizationSampleStrings.explore(languageCode: languageCode), for: .normal)
+        button.semanticContentAttribute = AuthorizationSampleStrings.isHebrew(languageCode: languageCode) ? .forceRightToLeft : .forceLeftToRight
     }
     
     required init(coder aDecoder: NSCoder) {

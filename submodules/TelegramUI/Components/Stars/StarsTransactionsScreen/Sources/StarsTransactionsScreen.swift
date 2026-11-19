@@ -814,7 +814,7 @@ final class StarsTransactionsScreenComponent: Component {
                             currency: component.starsContext.ton ? .ton : .stars,
                             rate: nil,
                             actionTitle: component.starsContext.ton ? environment.strings.Ton_WithdrawViaFragment : (withdrawAvailable ? environment.strings.Stars_Intro_BuyShort : environment.strings.Stars_Intro_Buy),
-                            actionAvailable: (!premiumConfiguration.areStarsDisabled && !premiumConfiguration.isPremiumDisabled) && (!component.starsContext.ton || tonWithdrawAvailable),
+                            actionAvailable: component.starsContext.ton ? ((!premiumConfiguration.areStarsDisabled && !premiumConfiguration.isPremiumDisabled) && tonWithdrawAvailable) : !premiumConfiguration.areStarsPurchasesDisabled,
                             actionIsEnabled: true,
                             actionIcon: component.starsContext.ton ? nil : PresentationResourcesItemList.itemListRoundTopupIcon(environment.theme),
                             action: { [weak self] in
@@ -1392,7 +1392,7 @@ public final class StarsTransactionsScreen: ViewControllerComponentContainer {
                 guard let self else {
                     return
                 }
-                let controller = context.sharedContext.makeStarsPurchaseScreen(context: context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { [weak self] stars in
+                guard let controller = context.sharedContext.makeStarsPurchaseScreen(context: context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { [weak self] stars in
                     guard let self else {
                         return
                     }
@@ -1413,7 +1413,9 @@ public final class StarsTransactionsScreen: ViewControllerComponentContainer {
                         elevatedLayout: false,
                         action: { _ in return true})
                     self.present(resultController, in: .window(.root))
-                })
+                }) else {
+                    return
+                }
                 self.push(controller)
             })
         }
@@ -1507,11 +1509,11 @@ public final class StarsTransactionsScreen: ViewControllerComponentContainer {
                 guard let self else {
                     return
                 }
-                let controller = self.context.sharedContext.makeStarsGiftController(context: self.context, birthdays: birthdays, completion: { [weak self] peerIds in
+                guard let controller = self.context.sharedContext.makeStarsGiftController(context: self.context, birthdays: birthdays, completion: { [weak self] peerIds in
                     guard let self, let peerId = peerIds.first else {
                         return
                     }
-                    let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
+                    guard let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
                         context: self.context,
                         starsContext: starsContext,
                         options: options,
@@ -1564,9 +1566,13 @@ public final class StarsTransactionsScreen: ViewControllerComponentContainer {
                                 self?.present(resultController, in: .window(.root))
                             }
                         }
-                    )
+                    ) else {
+                        return
+                    }
                     self.push(purchaseController)
-                })
+                }) else {
+                    return
+                }
                 self.push(controller)
             })
         }

@@ -1579,7 +1579,7 @@ public protocol SharedAccountContext: AnyObject {
     func makeStorySelectionController(context: AccountContext, peerId: EnginePeer.Id, excludeIds: [Int32], completion: @escaping ([EngineStoryItem]) -> Void) -> ViewController
     func makeArchiveSettingsController(context: AccountContext) -> ViewController
     func makeFilterSettingsController(context: AccountContext, modal: Bool, scrollToTags: Bool, dismissed: (() -> Void)?) -> ViewController
-    func makeBusinessSetupScreen(context: AccountContext) -> ViewController
+    func makeBusinessSetupScreen(context: AccountContext) -> ViewController?
     func makeChatbotSetupScreen(context: AccountContext, initialData: ChatbotSetupScreenInitialData) -> ViewController
     func makeChatbotSetupScreenInitialData(context: AccountContext) -> Signal<ChatbotSetupScreenInitialData, NoError>
     func makeBusinessLocationSetupScreen(context: AccountContext, initialValue: TelegramBusinessLocation?, completion: @escaping (TelegramBusinessLocation?) -> Void) -> ViewController
@@ -1647,15 +1647,15 @@ public protocol SharedAccountContext: AnyObject {
     func openChatWallpaper(context: AccountContext, message: EngineMessage, present: @escaping (ViewController, Any?) -> Void)
     func makeRecentSessionsController(context: AccountContext, activeSessionsContext: ActiveSessionsContext) -> ViewController & RecentSessionsController
     func makeChatQrCodeScreen(context: AccountContext, peer: EnginePeer, threadId: Int64?, temporary: Bool) -> ViewController
-    func makePremiumIntroController(context: AccountContext, source: PremiumIntroSource, forceDark: Bool, dismissed: (() -> Void)?) -> ViewController
-    func makePremiumIntroController(sharedContext: SharedAccountContext, engine: TelegramEngineUnauthorized, inAppPurchaseManager: InAppPurchaseManager, source: PremiumIntroSource, proceed: (() -> Void)?) -> ViewController
+    func makePremiumIntroController(context: AccountContext, source: PremiumIntroSource, forceDark: Bool, dismissed: (() -> Void)?) -> ViewController?
+    func makePremiumIntroController(sharedContext: SharedAccountContext, engine: TelegramEngineUnauthorized, inAppPurchaseManager: InAppPurchaseManager, source: PremiumIntroSource, proceed: (() -> Void)?) -> ViewController?
     func makePremiumDemoController(context: AccountContext, subject: PremiumDemoSubject, forceDark: Bool, action: @escaping () -> Void, dismissed: (() -> Void)?) -> ViewController
     func makePremiumLimitController(context: AccountContext, subject: PremiumLimitSubject, count: Int32, forceDark: Bool, cancel: @escaping () -> Void, action: @escaping () -> Bool) -> ViewController
-    func makeStarsGiftController(context: AccountContext, birthdays: [EnginePeer.Id: TelegramBirthday]?, completion: @escaping (([EnginePeer.Id]) -> Void)) -> ViewController
-    func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?, withdraw: ((StarGiftReference, String?) -> Signal<Never, WithdrawStarGiftError>)?) -> ViewController
-    func makeGiftOptionsController(context: AccountContext, peerId: EnginePeer.Id, premiumOptions: [CachedPremiumGiftOption], hasBirthday: Bool, completion: (() -> Void)?) -> ViewController
-    func makeGiftCollectiblesController(context: AccountContext, peerId: EnginePeer.Id) -> ViewController
-    func makeGiftStoreController(context: AccountContext, peerId: EnginePeer.Id, gift: StarGift.Gift) -> ViewController
+    func makeStarsGiftController(context: AccountContext, birthdays: [EnginePeer.Id: TelegramBirthday]?, completion: @escaping (([EnginePeer.Id]) -> Void)) -> ViewController?
+    func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?, withdraw: ((StarGiftReference, String?) -> Signal<Never, WithdrawStarGiftError>)?) -> ViewController?
+    func makeGiftOptionsController(context: AccountContext, peerId: EnginePeer.Id, premiumOptions: [CachedPremiumGiftOption], hasBirthday: Bool, completion: (() -> Void)?) -> ViewController?
+    func makeGiftCollectiblesController(context: AccountContext, peerId: EnginePeer.Id) -> ViewController?
+    func makeGiftStoreController(context: AccountContext, peerId: EnginePeer.Id, gift: StarGift.Gift) -> ViewController?
     func makePremiumPrivacyControllerController(context: AccountContext, subject: PremiumPrivacySubject, peerId: EnginePeer.Id) -> ViewController
     func makePremiumBoostLevelsController(context: AccountContext, peerId: EnginePeer.Id, subject: BoostSubject, boostStatus: ChannelBoostStatus, myBoostStatus: MyBoostStatus, forceDark: Bool, openStats: (() -> Void)?) -> ViewController
     func makeStickerPackScreen(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, mainStickerPack: StickerPackReference, stickerPacks: [StickerPackReference], loadedStickerPacks: [LoadedStickerPack], actionTitle: String?, isEditing: Bool, expandIfNeeded: Bool, parentNavigationController: NavigationController?, sendSticker: ((FileMediaReference, UIView?, CGRect?) -> Bool)?, actionPerformed: (([StickerPackScreenActionResult]) -> Void)?) -> ViewController
@@ -1681,7 +1681,7 @@ public protocol SharedAccountContext: AnyObject {
     func makePollStatsScreen(context: AccountContext, messageId: EngineMessage.Id) -> ViewController
     func makeStoryStatsController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peerId: EnginePeer.Id, storyId: Int32, storyItem: EngineStoryItem, fromStory: Bool) -> ViewController
     func makeStarsTransactionsScreen(context: AccountContext, starsContext: StarsContext) -> ViewController
-    func makeStarsPurchaseScreen(context: AccountContext, starsContext: StarsContext, options: [Any], purpose: StarsPurchasePurpose, targetPeerId: EnginePeer.Id?, customTheme: PresentationTheme?, completion: @escaping (Int64) -> Void) -> ViewController
+    func makeStarsPurchaseScreen(context: AccountContext, starsContext: StarsContext, options: [Any], purpose: StarsPurchasePurpose, targetPeerId: EnginePeer.Id?, customTheme: PresentationTheme?, completion: @escaping (Int64) -> Void) -> ViewController?
     func makeStarsTransferScreen(context: AccountContext, starsContext: StarsContext, invoice: TelegramMediaInvoice, source: BotPaymentInvoiceSource, extendedMedia: [TelegramExtendedMedia], inputData: Signal<(StarsContext.State, BotPaymentForm, EnginePeer?, EnginePeer?)?, NoError>, completion: @escaping (Bool) -> Void) -> ViewController
     func makeStarsSubscriptionTransferScreen(context: AccountContext, starsContext: StarsContext, invoice: TelegramMediaInvoice, link: String, inputData: Signal<(StarsContext.State, BotPaymentForm, EnginePeer?, EnginePeer?)?, NoError>, navigateToPeer: @escaping (EnginePeer) -> Void) -> ViewController
     func makeStarsTransactionScreen(context: AccountContext, transaction: StarsContext.State.Transaction, peer: EnginePeer) -> ViewController
@@ -2323,7 +2323,7 @@ public protocol WalletCollectibleStickerHost: AnyObject {
 }
 
 public extension SharedAccountContext {
-    func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?) -> ViewController {
+    func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?) -> ViewController? {
         return self.makePremiumGiftController(context: context, source: source, completion: completion, withdraw: nil)
     }
 }

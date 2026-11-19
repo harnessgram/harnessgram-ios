@@ -3924,7 +3924,9 @@ final class VideoChatScreenComponent: Component {
                         guard let file else {
                             var replaceImpl: ((ViewController) -> Void)?
                             let demoController = PremiumDemoScreen(context: context, subject: .uniqueReactions, forceDark: true, action: {
-                                let introController = PremiumIntroScreen(context: context, source: .reactions)
+                                guard let introController = PremiumIntroScreen(context: context, source: .reactions) else {
+                                    return
+                                }
                                 replaceImpl?(introController)
                             })
                             replaceImpl = { [weak demoController] c in
@@ -3941,7 +3943,9 @@ final class VideoChatScreenComponent: Component {
                             }
                             var replaceImpl: ((ViewController) -> Void)?
                             let demoController = PremiumDemoScreen(context: context, subject: .uniqueReactions, forceDark: true, action: {
-                                let introController = PremiumIntroScreen(context: context, source: .reactions)
+                                guard let introController = PremiumIntroScreen(context: context, source: .reactions) else {
+                                    return
+                                }
                                 replaceImpl?(introController)
                             })
                             replaceImpl = { [weak demoController] c in

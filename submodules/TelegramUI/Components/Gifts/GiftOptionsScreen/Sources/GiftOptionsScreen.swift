@@ -427,7 +427,9 @@ final class GiftOptionsScreenComponent: Component {
                         return
                     }
                     if gift.flags.contains(.requiresPremium) && !component.context.isPremium && !((gift.availability?.resale ?? 0) > 0) {
-                        let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .premiumGift(gift.file), forceDark: false, dismissed: nil)
+                        guard let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .premiumGift(gift.file), forceDark: false, dismissed: nil) else {
+                            return
+                        }
                         mainController.push(controller)
                         return
                     }
@@ -532,11 +534,13 @@ final class GiftOptionsScreenComponent: Component {
                     } else {
                         if let availability = gift.availability, availability.remains == 0 || gift.perUserLimit?.remains == 0 || component.peerId.namespace == Namespaces.Peer.CloudChannel {
                             if availability.resale > 0 {
-                                let storeController = component.context.sharedContext.makeGiftStoreController(
+                                guard let storeController = component.context.sharedContext.makeGiftStoreController(
                                     context: component.context,
                                     peerId: component.peerId,
                                     gift: gift
-                                )
+                                ) else {
+                                    return
+                                }
                                 mainController.push(storeController)
                             } else {
                                 let giftController = GiftViewScreen(
@@ -1044,7 +1048,7 @@ final class GiftOptionsScreenComponent: Component {
                             |> filter { $0 != nil }
                             |> take(1)
                             |> deliverOnMainQueue).startStandalone(next: { [weak mainController] options in
-                                let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
+                                guard let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
                                     context: context,
                                     starsContext: starsContext,
                                     options: options ?? [],
@@ -1055,7 +1059,9 @@ final class GiftOptionsScreenComponent: Component {
                                         starsContext.add(balance: StarsAmount(value: stars, nanos: 0))
                                         proceed(true)
                                     }
-                                )
+                                ) else {
+                                    return
+                                }
                                 mainController?.push(purchaseController)
                             })
                         } else {
@@ -1440,7 +1446,10 @@ final class GiftOptionsScreenComponent: Component {
                         if isPremiumDisabled {
                             introController = component.context.sharedContext.makeStarsIntroScreen(context: component.context)
                         } else {
-                            introController = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .settings, forceDark: false, dismissed: nil)
+                            guard let premiumController = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .settings, forceDark: false, dismissed: nil) else {
+                                return
+                            }
+                            introController = premiumController
                             introController.navigationPresentation = .modal
                         }
                         if let controller = environment.controller() as? GiftOptionsScreen {

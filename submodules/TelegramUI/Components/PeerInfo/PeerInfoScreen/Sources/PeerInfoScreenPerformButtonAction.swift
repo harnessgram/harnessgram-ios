@@ -633,7 +633,7 @@ extension PeerInfoScreenNode {
                         })))
                     }
                     
-                    if strongSelf.peerId.namespace == Namespaces.Peer.CloudUser, !user.isDeleted && user.botInfo == nil && !user.flags.contains(.isSupport) {
+                    if PremiumConfiguration.allowsPurchases, strongSelf.peerId.namespace == Namespaces.Peer.CloudUser, !user.isDeleted && user.botInfo == nil && !user.flags.contains(.isSupport) {
                         if let cachedData = data.cachedData as? CachedUserData, cachedData.disallowedGifts == .All {
                         } else {
                             items.append(.action(ContextMenuActionItem(text: presentationData.strings.Profile_SendGift, icon: { theme in
@@ -810,7 +810,9 @@ extension PeerInfoScreenNode {
                                     let context = self.context
                                     var replaceImpl: ((ViewController) -> Void)?
                                     let demoController = context.sharedContext.makePremiumDemoController(context: context, subject: .copyProtection, forceDark: false, action: {
-                                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .copyProtection, forceDark: false, dismissed: nil)
+                                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .copyProtection, forceDark: false, dismissed: nil) else {
+                                            return
+                                        }
                                         replaceImpl?(controller)
                                     }, dismissed: nil)
                                     replaceImpl = { [weak demoController] c in
@@ -920,7 +922,7 @@ extension PeerInfoScreenNode {
                     }
                 } else if case let .channel(channel) = peer {
                     if let cachedData = strongSelf.data?.cachedData as? CachedChannelData {
-                        if case .broadcast = channel.info, cachedData.flags.contains(.starGiftsAvailable) {
+                        if PremiumConfiguration.allowsPurchases, case .broadcast = channel.info, cachedData.flags.contains(.starGiftsAvailable) {
                             items.append(.action(ContextMenuActionItem(text: presentationData.strings.Profile_SendGift, badge: nil, icon: { theme in
                                 generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Gift"), color: theme.contextMenu.primaryColor)
                             }, action: { [weak self] _, f in

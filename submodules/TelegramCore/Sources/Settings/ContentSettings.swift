@@ -96,40 +96,20 @@ public func contentSettingsConfiguration(network: Network) -> Signal<ContentSett
 }
 
 public func updateRemoteContentSettingsConfiguration(postbox: Postbox, network: Network, sensitiveContentEnabled: Bool) -> Signal<Never, NoError> {
-    var flags: Int32 = 0
-    if sensitiveContentEnabled && !HarnessgramPolicy.forceSensitiveFilter {
-        flags |= 1 << 0
-    }
-    return network.request(Api.functions.account.setContentSettings(flags: flags))
-    |> `catch` { _ -> Signal<Api.Bool, NoError> in
-        return .single(.boolFalse)
-    }
-    |> mapToSignal { _ -> Signal<Never, NoError> in
-        return updateAppConfigurationOnce(postbox: postbox, network: network)
-        |> ignoreValues
-    }
-}
-
-/// One best-effort attempt per main-account initialization, including existing logins.
-/// Local enforcement never depends on the request succeeding or being permitted.
-func harnessgramEnforceSensitiveContentFilter(postbox: Postbox, network: Network) -> Signal<Never, NoError> {
-    guard HarnessgramPolicy.forceSensitiveFilter else {
-        return .complete()
-    }
-    return network.request(Api.functions.account.getContentSettings())
-    |> map { result -> Int32 in
-        switch result {
-        case let .contentSettings(serverSettings):
-            return serverSettings.flags
-        }
-    }
-    |> `catch` { _ -> Signal<Int32, NoError> in
-        return .single(0)
-    }
-    |> mapToSignal { serverFlags -> Signal<Never, NoError> in
-        guard (serverFlags & (1 << 1)) != 0 else {
+    return deferred {
+        // The local rule can change while a Telegram age-verification prompt is open.
+        // Never turn a requested opt-out into a server-side opt-in to filtering.
+        guard !HarnessgramPolicy.forceSensitiveFilter else {
             return .complete()
         }
-        return updateRemoteContentSettingsConfiguration(postbox: postbox, network: network, sensitiveContentEnabled: false)
+        let flags: Int32 = sensitiveContentEnabled ? (1 << 0) : 0
+        return network.request(Api.functions.account.setContentSettings(flags: flags))
+        |> `catch` { _ -> Signal<Api.Bool, NoError> in
+            return .single(.boolFalse)
+        }
+        |> mapToSignal { _ -> Signal<Never, NoError> in
+            return updateAppConfigurationOnce(postbox: postbox, network: network)
+            |> ignoreValues
+        }
     }
 }

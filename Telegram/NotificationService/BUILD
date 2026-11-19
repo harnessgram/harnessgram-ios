@@ -64,3 +64,6 @@ ios_unit_test(
         "//visibility:public",
     ],
 )
+
+# The extension privacy manifest is bundled from //Telegram (Telegram/BUILD).
+exports_files(["PrivacyInfo.xcprivacy"])

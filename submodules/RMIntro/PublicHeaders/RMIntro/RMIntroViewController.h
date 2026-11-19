@@ -56,6 +56,7 @@
 @property (nonatomic, copy) void (^startMessagingInAlternativeLanguage)(NSString *);
 
 @property (nonatomic, copy) UIView *(^createStartButton)(CGFloat);
+@property (nonatomic, strong) UIView *secondaryStartButton; // may be nil; no nullability marks in this header (any one turns on -Wnullability-completeness for all)
 
 // VoiceOver: the page indicator is an adjustable element with this label and the value this block returns for the
 // shown page (1-based) and the page count; swiping up/down on it shows the next/previous page.

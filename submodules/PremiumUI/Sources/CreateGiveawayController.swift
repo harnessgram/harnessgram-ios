@@ -1627,7 +1627,9 @@ public func createGiveawayController(context: AccountContext, updatedPresentatio
     }
     
     openPremiumIntroImpl = {
-        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil)
+        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil) else {
+            return
+        }
         pushControllerImpl?(controller)
     }
     

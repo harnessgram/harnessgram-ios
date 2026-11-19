@@ -595,7 +595,9 @@ private final class StickerPackContainer: ASDisplayNode {
                                 guard let strongSelf = self else {
                                     return
                                 }
-                                let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers)
+                                guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers) else {
+                                    return
+                                }
                                 let navigationController = strongSelf.controller?.parentNavigationController
                                 strongSelf.controller?.dismiss(animated: false, completion: nil)
                                 navigationController?.pushViewController(controller)
@@ -952,7 +954,9 @@ private final class StickerPackContainer: ASDisplayNode {
                 } else {
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = PremiumDemoScreen(context: context, subject: .animatedEmoji, action: {
-                        let controller = PremiumIntroScreen(context: context, source: .animatedEmoji)
+                        guard let controller = PremiumIntroScreen(context: context, source: .animatedEmoji) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     })
                     replaceImpl = { [weak controller] c in
@@ -977,7 +981,9 @@ private final class StickerPackContainer: ASDisplayNode {
                 guard let strongSelf = self else {
                     return
                 }
-                let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers)
+                guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .stickers) else {
+                    return
+                }
                 let navigationController = strongSelf.controller?.parentNavigationController
                 strongSelf.controller?.dismiss(animated: false, completion: nil)
                 navigationController?.pushViewController(controller)

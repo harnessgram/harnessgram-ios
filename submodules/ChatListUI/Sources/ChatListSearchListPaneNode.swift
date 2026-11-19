@@ -5373,7 +5373,9 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                                     return
                                 }
                                 let context = self.context
-                                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil)
+                                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil) else {
+                                    return
+                                }
                                 navigationController.pushViewController(controller)
                             } else {
                                 if let searchQueryValue = self.searchQueryValue, !searchQueryValue.isEmpty, self.approvedGlobalPostQueryStateValue?.query != searchQueryValue {

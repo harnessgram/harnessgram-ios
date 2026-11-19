@@ -1081,7 +1081,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                             let context = self.context
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = PremiumLimitScreen(context: context, subject: .folders, count: self.foldersCount, action: {
-                                let controller = PremiumIntroScreen(context: context, source: .folders)
+                                guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                                    return false
+                                }
                                 replaceImpl?(controller)
                                 return true
                             })
@@ -1125,7 +1127,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                                 let context = self.context
                                 var replaceImpl: ((ViewController) -> Void)?
                                 let controller = PremiumLimitScreen(context: context, subject: .folders, count: self.foldersCount, action: {
-                                    let controller = PremiumIntroScreen(context: context, source: .folders)
+                                    guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                                        return false
+                                    }
                                     replaceImpl?(controller)
                                     return true
                                 })
@@ -1165,7 +1169,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                                             } else if data.includePeers.peers.count >= limit && !isPremium {
                                                 var replaceImpl: ((ViewController) -> Void)?
                                                 let controller = PremiumLimitScreen(context: self.context, subject: .chatsPerFolder, count: Int32(data.includePeers.peers.count), action: {
-                                                    let controller = PremiumIntroScreen(context: self.context, source: .chatsPerFolder)
+                                                    guard let controller = PremiumIntroScreen(context: self.context, source: .chatsPerFolder) else {
+                                                        return false
+                                                    }
                                                     replaceImpl?(controller)
                                                     return true
                                                 })
@@ -2519,7 +2525,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             let context = strongSelf.context
             var replaceImpl: ((ViewController) -> Void)?
             let controller = PremiumLimitScreen(context: context, subject: .folders, count: strongSelf.foldersCount, action: {
-                let controller = PremiumIntroScreen(context: context, source: .folders)
+                guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                    return false
+                }
                 replaceImpl?(controller)
                 return true
             })
@@ -3093,7 +3101,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             let context = self.context
             var replaceImpl: ((ViewController) -> Void)?
             let controller = PremiumLimitScreen(context: context, subject: .expiringStories, count: Int32(storiesCount), action: {
-                let controller = PremiumIntroScreen(context: context, source: .stories)
+                guard let controller = PremiumIntroScreen(context: context, source: .stories) else {
+                    return false
+                }
                 replaceImpl?(controller)
                 return true
             })
@@ -3154,7 +3164,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         location: .point(location, .top),
                         shouldDismissOnTouch: { [weak self] point, containerFrame in
                             if containerFrame.contains(point), premiumNeeded {
-                                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: false, dismissed: nil)
+                                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: false, dismissed: nil) else {
+                                    return .dismiss(consume: false)
+                                }
                                 self?.push(controller)
                                 return .dismiss(consume: true)
                             } else {
@@ -6455,7 +6467,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                             let context = strongSelf.context
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = PremiumLimitScreen(context: context, subject: .folders, count: strongSelf.foldersCount, action: {
-                                let controller = PremiumIntroScreen(context: context, source: .folders)
+                                guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                                    return false
+                                }
                                 replaceImpl?(controller)
                                 return true
                             })
@@ -6541,7 +6555,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         guard let starsContext = self.context.starsContext else {
             return
         }
-        let controller = self.context.sharedContext.makeStarsPurchaseScreen(context: self.context, starsContext: starsContext, options: [], purpose: amount.flatMap({ .topUp(requiredStars: $0, purpose: "subs") }) ?? .generic, targetPeerId: nil, customTheme: nil, completion: { _ in })
+        guard let controller = self.context.sharedContext.makeStarsPurchaseScreen(context: self.context, starsContext: starsContext, options: [], purpose: amount.flatMap({ .topUp(requiredStars: $0, purpose: "subs") }) ?? .generic, targetPeerId: nil, customTheme: nil, completion: { _ in }) else {
+            return
+        }
         self.push(controller)
     }
     
@@ -6665,7 +6681,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 } else {
                     var replaceImpl: ((ViewController) -> Void)?
                     let demoController = context.sharedContext.makePremiumDemoController(context: context, subject: .noAds, forceDark: false, action: {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil)
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     }, dismissed: nil)
                     replaceImpl = { [weak demoController] c in

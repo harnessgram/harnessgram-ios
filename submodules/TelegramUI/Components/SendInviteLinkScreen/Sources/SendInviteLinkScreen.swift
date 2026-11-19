@@ -1103,7 +1103,9 @@ final class SendInviteLinkScreenComponent: Component {
                             }
                             let navigationController = controller.navigationController as? NavigationController
                             controller.dismiss()
-                            let premiumController = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .settings, forceDark: false, dismissed: nil)
+                            guard let premiumController = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .settings, forceDark: false, dismissed: nil) else {
+                                return
+                            }
                             navigationController?.pushViewController(premiumController)
                         }
                     )),

@@ -1,4 +1,5 @@
 import Foundation
+import HarnessgramSettings
 import CoreLocation
 import SwiftSignalKit
 import StoreKit
@@ -279,10 +280,13 @@ public final class InAppPurchaseManager: NSObject {
     }
     
     var canMakePayments: Bool {
-        return SKPaymentQueue.canMakePayments()
+        return HarnessgramSettings.allowsTelegramPurchases() && SKPaymentQueue.canMakePayments()
     }
     
     private func requestProducts() {
+        guard HarnessgramSettings.allowsTelegramPurchases() else {
+            return
+        }
         Queue.mainQueue().async { [weak self] in
             guard let self, self.products.isEmpty, self.productRequest == nil, self.productRequestRetryTimer == nil else {
                 return
@@ -348,6 +352,9 @@ public final class InAppPurchaseManager: NSObject {
     }
     
     public func buyProduct(_ product: Product, quantity: Int32 = 1, purpose: AppStoreTransactionPurpose, reportPending: Bool = false) -> Signal<PurchaseState, PurchaseError> {
+        guard HarnessgramSettings.allowsTelegramPurchases() else {
+            return .fail(.notAllowed)
+        }
         let accountPeerId: String
         switch self.engine {
         case let .authorized(engine):

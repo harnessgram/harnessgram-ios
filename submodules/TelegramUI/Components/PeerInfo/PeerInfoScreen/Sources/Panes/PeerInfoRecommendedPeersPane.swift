@@ -248,7 +248,9 @@ final class PeerInfoRecommendedPeersPaneNode: ASDisplayNode, PeerInfoPaneNode {
     }
     
     @objc private func unlockPressed() {
-        let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .ads, forceDark: false, dismissed: nil)
+        guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .ads, forceDark: false, dismissed: nil) else {
+            return
+        }
         self.chatControllerInteraction.navigationController()?.pushViewController(controller)
     }
     

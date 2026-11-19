@@ -293,6 +293,9 @@ public final class ChatChannelSubscriberInputPanelNode: ChatInputPanelNode {
     }
     
     @objc private func giftPressed() {
+        guard PremiumConfiguration.allowsPurchases else {
+            return
+        }
         self.interfaceInteraction?.openPremiumGift()
     }
     
@@ -922,7 +925,7 @@ public final class ChatChannelSubscriberInputPanelNode: ChatInputPanelNode {
         var displayHelp = false
         
         if let peer = interfaceState.renderedPeer?.peer as? TelegramChannel {
-            if case .broadcast = peer.info, interfaceState.starGiftsAvailable {
+            if PremiumConfiguration.allowsPurchases, case .broadcast = peer.info, interfaceState.starGiftsAvailable {
                 displayGift = true
             }
             if case let .broadcast(broadcastInfo) = peer.info, broadcastInfo.flags.contains(.hasMonoforum) {

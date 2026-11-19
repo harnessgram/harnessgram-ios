@@ -4808,7 +4808,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                     } else {
                         var replaceImpl: ((ViewController) -> Void)?
                         let controller = PremiumDemoScreen(context: context, subject: .animatedEmoji, action: {
-                            let controller = PremiumIntroScreen(context: context, source: .animatedEmoji)
+                            guard let controller = PremiumIntroScreen(context: context, source: .animatedEmoji) else {
+                                return
+                            }
                             replaceImpl?(controller)
                         })
                         replaceImpl = { [weak controller] c in
@@ -4841,7 +4843,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                 let _ = self
                 let _ = interfaceInteraction
                 
-                let controller = PremiumIntroScreen(context: context, source: .stickers)
+                guard let controller = PremiumIntroScreen(context: context, source: .stickers) else {
+                    return
+                }
                 //let _ = controller
                 
                 interfaceInteraction.getNavigationController()?.pushViewController(controller)

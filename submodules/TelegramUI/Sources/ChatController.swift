@@ -1336,7 +1336,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             self.chatDisplayNode.dismissInput()
                             let fromPeerId: PeerId = message.author?.id == self.context.account.peerId ? self.context.account.peerId : message.id.peerId
                             let toPeerId: PeerId = message.author?.id == self.context.account.peerId ? message.id.peerId : self.context.account.peerId
-                            let controller = PremiumIntroScreen(context: self.context, source: .gift(from: fromPeerId, to: toPeerId, duration: duration, giftCode: nil))
+                            guard let controller = PremiumIntroScreen(context: self.context, source: .gift(from: fromPeerId, to: toPeerId, duration: duration, giftCode: nil)) else {
+                                return false
+                            }
                             self.push(controller)
                             return true
                         case .starGift, .starGiftUnique:
@@ -2150,9 +2152,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                         return
                                     }
                                     
-                                    let purchaseScreen = strongSelf.context.sharedContext.makeStarsPurchaseScreen(context: strongSelf.context, starsContext: starsContext, options: options, purpose: .reactions(peerId: peerId, requiredStars: 1), targetPeerId: nil, customTheme: nil, completion: { result in
+                                    guard let purchaseScreen = strongSelf.context.sharedContext.makeStarsPurchaseScreen(context: strongSelf.context, starsContext: starsContext, options: options, purpose: .reactions(peerId: peerId, requiredStars: 1), targetPeerId: nil, customTheme: nil, completion: { result in
                                         let _ = result
-                                    })
+                                    }) else {
+                                        return
+                                    }
                                     strongSelf.push(purchaseScreen)
                                 })
                                 
@@ -2346,7 +2350,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                         action: { [weak self] action in
                                             if case .info = action {
                                                 if let self {
-                                                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .reactions, forceDark: false, dismissed: nil)
+                                                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .reactions, forceDark: false, dismissed: nil) else {
+                                                        return false
+                                                    }
                                                     self.push(controller)
                                                 }
                                             }
@@ -2999,8 +3005,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                             guard let strongSelf else {
                                                 return
                                             }
-                                            let purchaseController = strongSelf.context.sharedContext.makeStarsPurchaseScreen(context: strongSelf.context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { _ in
-                                            })
+                                            guard let purchaseController = strongSelf.context.sharedContext.makeStarsPurchaseScreen(context: strongSelf.context, starsContext: starsContext, options: options, purpose: .generic, targetPeerId: nil, customTheme: nil, completion: { _ in
+                                            }) else {
+                                                return
+                                            }
                                             strongSelf.push(purchaseController)
                                         })
                                         
@@ -5434,7 +5442,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 let context = self.context
                 var replaceImpl: ((ViewController) -> Void)?
                 let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .noAds, forceDark: false, action: {
-                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil)
+                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil) else {
+                        return
+                    }
                     replaceImpl?(controller)
                 }, dismissed: nil)
                 replaceImpl = { [weak controller] c in
@@ -5521,7 +5531,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 guard let self else {
                     return
                 }
-                let controller = PremiumIntroScreen(context: self.context, source: source)
+                guard let controller = PremiumIntroScreen(context: self.context, source: source) else {
+                    return
+                }
                 controller.sourceView = sourceView
                 controller.containerView = self.navigationController?.view                
                 let animationColor: UIColor
@@ -5674,7 +5686,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 if let cachedUserData = self.contentData?.state.peerView?.cachedData as? CachedUserData {
                     hasBirthday = hasBirthdayToday(cachedData: cachedUserData)
                 }
-                let controller = self.context.sharedContext.makeGiftOptionsController(context: context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: hasBirthday, completion: nil)
+                guard let controller = self.context.sharedContext.makeGiftOptionsController(context: context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: hasBirthday, completion: nil) else {
+                    return
+                }
                 self.push(controller)
             })
         }, openUniqueGift: { [weak self] slug in
@@ -5993,7 +6007,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             return false
                         }
                         if case .info = action {
-                            let controller = self.context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil)
+                            guard let controller = self.context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil) else {
+                                return false
+                            }
                             self.push(controller)
                         }
                         return false

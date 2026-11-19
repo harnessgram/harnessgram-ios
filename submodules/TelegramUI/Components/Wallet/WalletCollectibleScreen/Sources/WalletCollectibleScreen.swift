@@ -803,7 +803,9 @@ private final class WalletCollectibleContentComponent: Component {
                 return
             }
             let context = component.context
-            let storeController = context.sharedContext.makeGiftStoreController(context: context, peerId: context.account.peerId, gift: gift)
+            guard let storeController = context.sharedContext.makeGiftStoreController(context: context, peerId: context.account.peerId, gift: gift) else {
+                return
+            }
             self.close(completion: { dismiss in
                 dismiss()
                 navigationController.pushViewController(storeController)

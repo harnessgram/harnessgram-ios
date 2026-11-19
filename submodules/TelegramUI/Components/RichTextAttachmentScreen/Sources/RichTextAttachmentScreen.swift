@@ -418,7 +418,9 @@ public class RichTextAttachmentScreen: ViewControllerComponentContainer, Attachm
                 guard let self else {
                     return
                 }
-                let premiumController = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .richText, forceDark: false, dismissed: nil)
+                guard let premiumController = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .richText, forceDark: false, dismissed: nil) else {
+                    return
+                }
                 if let parentController = self.parentController() {
                     parentController.push(premiumController)
                 } else {

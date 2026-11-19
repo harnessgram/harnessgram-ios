@@ -779,7 +779,9 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                                 } else {
                                     var replaceImpl: ((ViewController) -> Void)?
                                     let controller = PremiumDemoScreen(context: context, subject: .animatedEmoji, action: {
-                                        let controller = PremiumIntroScreen(context: context, source: .animatedEmoji)
+                                        guard let controller = PremiumIntroScreen(context: context, source: .animatedEmoji) else {
+                                            return
+                                        }
                                         replaceImpl?(controller)
                                     })
                                     replaceImpl = { [weak controller] c in
@@ -824,7 +826,9 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                 if isPremiumLocked {
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = PremiumDemoScreen(context: context, subject: .animatedEmoji, action: {
-                        let controller = PremiumIntroScreen(context: context, source: .animatedEmoji)
+                        guard let controller = PremiumIntroScreen(context: context, source: .animatedEmoji) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     })
                     replaceImpl = { [weak controller] c in
@@ -1267,7 +1271,9 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                         })
                     } else {
                         if file.isPremiumSticker && !hasPremium {
-                            let controller = PremiumIntroScreen(context: context, source: .stickers)
+                            guard let controller = PremiumIntroScreen(context: context, source: .stickers) else {
+                                return
+                            }
                             interaction.getNavigationController()?.pushViewController(controller)
 
                             return
@@ -1330,7 +1336,9 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                 }
 
                 if isPremiumLocked {
-                    let controller = PremiumIntroScreen(context: context, source: .stickers)
+                    guard let controller = PremiumIntroScreen(context: context, source: .stickers) else {
+                        return
+                    }
                     interaction.getNavigationController()?.pushViewController(controller)
 
                     return
@@ -2334,7 +2342,9 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                                     }
 
                                     if case .info = action {
-                                        let controller = PremiumIntroScreen(context: context, source: .savedGifs)
+                                        guard let controller = PremiumIntroScreen(context: context, source: .savedGifs) else {
+                                            return false
+                                        }
                                         strongSelf.interaction?.getNavigationController()?.pushViewController(controller)
                                         return true
                                     }
@@ -2468,7 +2478,9 @@ public final class EntityInputView: UIInputView, LegacyMessageInputPanelInputVie
 
                                     var replaceImpl: ((ViewController) -> Void)?
                                     let controller = PremiumDemoScreen(context: strongSelf.context, subject: .animatedEmoji, action: {
-                                        let controller = PremiumIntroScreen(context: strongSelf.context, source: .animatedEmoji)
+                                        guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .animatedEmoji) else {
+                                            return
+                                        }
                                         replaceImpl?(controller)
                                     })
                                     replaceImpl = { [weak controller] c in
@@ -2905,7 +2917,9 @@ public final class EmojiContentPeekBehaviorImpl: EmojiContentPeekBehavior {
                                     } else {
                                         var replaceImpl: ((ViewController) -> Void)?
                                         let controller = PremiumDemoScreen(context: context, subject: .animatedEmoji, action: {
-                                            let controller = PremiumIntroScreen(context: context, source: .animatedEmoji)
+                                            guard let controller = PremiumIntroScreen(context: context, source: .animatedEmoji) else {
+                                                return
+                                            }
                                             replaceImpl?(controller)
                                         })
                                         replaceImpl = { [weak controller] c in
@@ -2935,7 +2949,9 @@ public final class EmojiContentPeekBehaviorImpl: EmojiContentPeekBehavior {
                             guard let strongSelf = self, let interaction = strongSelf.interaction else {
                                 return
                             }
-                            let controller = PremiumIntroScreen(context: context, source: .stickers)
+                            guard let controller = PremiumIntroScreen(context: context, source: .stickers) else {
+                                return
+                            }
                             interaction.navigationController()?.pushViewController(controller)
                         }))
                     }
@@ -3025,7 +3041,9 @@ public final class EmojiContentPeekBehaviorImpl: EmojiContentPeekBehavior {
                                             }
                                             interaction.presentGlobalOverlayController(UndoOverlayController(presentationData: presentationData, content: .sticker(context: context, file: file, loop: true, title: presentationData.strings.Premium_MaxFavedStickersTitle("\(limit)").string, text: text, undoText: nil, customAction: nil), elevatedLayout: false, action: { action in
                                                 if case .info = action {
-                                                    let controller = PremiumIntroScreen(context: context, source: .savedStickers)
+                                                    guard let controller = PremiumIntroScreen(context: context, source: .savedStickers) else {
+                                                        return false
+                                                    }
                                                     interaction.navigationController()?.pushViewController(controller)
                                                     return true
                                                 }
@@ -3125,7 +3143,9 @@ public final class EmojiContentPeekBehaviorImpl: EmojiContentPeekBehavior {
                             guard let strongSelf = self, let interaction = strongSelf.interaction else {
                                 return
                             }
-                            let controller = PremiumIntroScreen(context: context, source: .stickers)
+                            guard let controller = PremiumIntroScreen(context: context, source: .stickers) else {
+                                return
+                            }
                             interaction.navigationController()?.pushViewController(controller)
                         }))
                     }

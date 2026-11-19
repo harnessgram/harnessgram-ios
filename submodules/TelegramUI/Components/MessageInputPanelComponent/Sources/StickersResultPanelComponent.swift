@@ -277,7 +277,9 @@ final class StickersResultPanelComponent: Component {
                                     guard let self, let component = self.component else {
                                         return
                                     }
-                                    let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .stickers, forceDark: false, dismissed: nil)
+                                    guard let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .stickers, forceDark: false, dismissed: nil) else {
+                                        return
+                                    }
                                     component.present(controller)
                                 }))
                             } else {

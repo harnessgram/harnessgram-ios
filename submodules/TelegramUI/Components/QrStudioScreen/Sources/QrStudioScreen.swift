@@ -1719,7 +1719,9 @@ final class QrStudioScreenComponent: Component {
                 guard let controller = self?.environment?.controller() as? ViewController else {
                     return
                 }
-                controller.push(context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil))
+                if let purchaseController = context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil) {
+                    controller.push(purchaseController)
+                }
             }))
         }
 
@@ -1771,7 +1773,9 @@ final class QrStudioScreenComponent: Component {
                 return
             }
             let context = component.context
-            let giftsController = context.sharedContext.makeGiftCollectiblesController(context: context, peerId: context.account.peerId)
+            guard let giftsController = context.sharedContext.makeGiftCollectiblesController(context: context, peerId: context.account.peerId) else {
+                return
+            }
             controller.push(giftsController)
         }
 

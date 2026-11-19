@@ -277,6 +277,9 @@ typedef enum {
     
     CGPoint buttonTargetPosition = _startButton.center;
     _startButton.center = CGPointMake(buttonTargetPosition.x, buttonTargetPosition.y + 220.0);
+    UIView *secondaryButton = self.secondaryStartButton;
+    CGPoint secondaryTargetPosition = secondaryButton != nil ? secondaryButton.center : CGPointZero;
+    secondaryButton.center = CGPointMake(secondaryTargetPosition.x, secondaryTargetPosition.y + 220.0);
     
     _logoPlaceholder.transform = CGAffineTransformMakeScale(0.66, 0.66);
         
@@ -286,6 +289,7 @@ typedef enum {
         firstPage.descriptionLabel.center = descriptionTargetPosition;
         _pageControl.center = pageControlTargetPosition;
         _startButton.center = buttonTargetPosition;
+        secondaryButton.center = secondaryTargetPosition;
         _logoPlaceholder.transform = CGAffineTransformIdentity;
     } completion:nil];
     
@@ -293,12 +297,14 @@ typedef enum {
     _pageScrollView.alpha = 0.0;
     _pageControl.alpha = 0.0;
     _startButton.alpha = 0.0;
+    secondaryButton.alpha = 0.0;
     
     [UIView animateWithDuration:0.3 delay:0.15 options:kNilOptions animations:^{
         _logoPlaceholder.alpha = 1.0;
         _pageScrollView.alpha = 1.0;
         _pageControl.alpha = 1.0;
         _startButton.alpha = 1.0;
+        secondaryButton.alpha = 1.0;
     } completion:nil];
 }
 
@@ -573,6 +579,10 @@ typedef enum {
     if (!_alternativeLanguageButton.isHidden) {
         startButtonY += languageButtonSpread;
     }
+    if (self.secondaryStartButton != nil) {
+        // Reserve its tap target and the bottom safe area before placing the primary button.
+        startButtonY = MAX(startButtonY + 44.0f, 94.0f + self.view.safeAreaInsets.bottom);
+    }
     
     _pageControl.frame = CGRectMake(0, pageControlY, self.view.bounds.size.width, 7);
     _logoPlaceholder.frame = CGRectChangedOriginY(_logoPlaceholder.frame, glViewY - statusBarHeight);
@@ -585,7 +595,12 @@ typedef enum {
     }
     startButton.frame = CGRectMake(floor((self.view.bounds.size.width - startButtonWidth) / 2.0f), self.view.bounds.size.height - startButtonY - statusBarHeight, startButtonWidth, 50.0f);
     
-    _alternativeLanguageButton.frame = CGRectMake(floor((self.view.bounds.size.width - _alternativeLanguageButton.frame.size.width) / 2.0f), CGRectGetMaxY(startButton.frame) + languageButtonOffset, _alternativeLanguageButton.frame.size.width, _alternativeLanguageButton.frame.size.height);
+    if (self.secondaryStartButton != nil && self.secondaryStartButton.superview == nil) {
+        [self.view addSubview:self.secondaryStartButton];
+    }
+    self.secondaryStartButton.frame = CGRectMake(CGRectGetMinX(startButton.frame), CGRectGetMaxY(startButton.frame), startButtonWidth, 44.0f);
+    CGFloat alternativeLanguageY = CGRectGetMaxY(startButton.frame) + (self.secondaryStartButton != nil ? 44.0f : languageButtonOffset);
+    _alternativeLanguageButton.frame = CGRectMake(floor((self.view.bounds.size.width - _alternativeLanguageButton.frame.size.width) / 2.0f), alternativeLanguageY, _alternativeLanguageButton.frame.size.width, _alternativeLanguageButton.frame.size.height);
     
     _wrapperView.frame = CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height);
     _pageScrollView.frame=CGRectMake(0, 20, self.view.bounds.size.width, self.view.bounds.size.height - 20);

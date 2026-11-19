@@ -1656,7 +1656,9 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                                     let context = self.context
                                     var replaceImpl: ((ViewController) -> Void)?
                                     let controller = PremiumLimitScreen(context: context, subject: .folders, count: Int32(filtersCount), action: {
-                                        let controller = PremiumIntroScreen(context: context, source: .folders)
+                                        guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                                            return false
+                                        }
                                         replaceImpl?(controller)
                                         return true
                                     })

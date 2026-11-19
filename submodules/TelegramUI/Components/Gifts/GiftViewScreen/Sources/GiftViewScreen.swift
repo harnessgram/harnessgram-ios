@@ -1418,7 +1418,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                     guard let self, let controller = self.getController() else {
                         return
                     }
-                    let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
+                    guard let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
                         context: self.context,
                         starsContext: starsContext,
                         options: options ?? [],
@@ -1438,7 +1438,9 @@ private final class GiftViewSheetContent: CombinedComponent {
                                 proceed()
                             })
                         }
-                    )
+                    ) else {
+                        return
+                    }
                     controller.push(purchaseController)
                 })
             } else {
@@ -1494,7 +1496,9 @@ private final class GiftViewSheetContent: CombinedComponent {
                     return
                 }
                 let premiumOptions = giftOptions.filter { $0.users == 1 }.map { CachedPremiumGiftOption(months: $0.months, currency: $0.currency, amount: $0.amount, botUrl: "", storeProductId: $0.storeProductId) }
-                let giftController = self.context.sharedContext.makeGiftOptionsController(context: self.context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: false, completion: nil)
+                guard let giftController = self.context.sharedContext.makeGiftOptionsController(context: self.context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: false, completion: nil) else {
+                    return
+                }
                 controller.push(giftController)
             })
             
@@ -1768,13 +1772,15 @@ private final class GiftViewSheetContent: CombinedComponent {
                 guard let controller else {
                     return
                 }
-                let transferController = context.sharedContext.makePremiumGiftController(context: context, source: .starGiftDeposit(birthdays, gift), completion: { peerIds in
+                guard let transferController = context.sharedContext.makePremiumGiftController(context: context, source: .starGiftDeposit(birthdays, gift), completion: { peerIds in
                     guard let peerId = peerIds.first else {
                         return .complete()
                     }
                     return depositStarGiftFromWallet(context: context, gift: gift, peerId: peerId)
                     |> deliverOnMainQueue
-                })
+                }) else {
+                    return
+                }
                 controller.push(transferController)
             })
         }
@@ -1828,7 +1834,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                 let tranfserGiftImpl = controller.transferGift
                 let profileGiftsContext = controller.profileGiftsContext
                 
-                let transferController = self.context.sharedContext.makePremiumGiftController(context: context, source: .starGiftTransfer(birthdays, reference, gift, transferStars, arguments.canExportDate, showSelf), completion: { peerIds in
+                guard let transferController = self.context.sharedContext.makePremiumGiftController(context: context, source: .starGiftTransfer(birthdays, reference, gift, transferStars, arguments.canExportDate, showSelf), completion: { peerIds in
                     guard let peerId = peerIds.first else {
                         return .complete()
                     }
@@ -1848,7 +1854,9 @@ private final class GiftViewSheetContent: CombinedComponent {
                     return { reference, password in
                         return profileGiftsContext.withdrawStarGift(reference: reference, keepOnProfile: false, password: password)
                     }
-                })
+                }) else {
+                    return
+                }
                 controller.push(transferController)
             })
         }
@@ -2250,7 +2258,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                     })))
                 }
                 
-                if case let .unique(uniqueGift) = arguments.gift, case let .peerId(ownerPeerId) = uniqueGift.owner, ownerPeerId != self.context.account.peerId, uniqueGift.minOfferStars != nil {
+                if PremiumConfiguration.allowsPurchases, case let .unique(uniqueGift) = arguments.gift, case let .peerId(ownerPeerId) = uniqueGift.owner, ownerPeerId != self.context.account.peerId, uniqueGift.minOfferStars != nil {
                     items.append(.action(ContextMenuActionItem(text: presentationData.strings.Gift_View_Context_BuyOffer, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Media Grid/Paid"), color: theme.contextMenu.primaryColor)
                     }, action: { [weak self] c, _ in
@@ -2793,7 +2801,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                         guard let self, let controller = self.getController() else {
                             return
                         }
-                        let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
+                        guard let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
                             context: self.context,
                             starsContext: starsContext,
                             options: options ?? [],
@@ -2813,7 +2821,9 @@ private final class GiftViewSheetContent: CombinedComponent {
                                     proceed(upgradeForm.id)
                                 })
                             }
-                        )
+                        ) else {
+                            return
+                        }
                         controller.push(purchaseController)
                     })
                 } else {
@@ -2961,7 +2971,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                     guard let self, let controller else {
                         return
                     }
-                    let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
+                    guard let purchaseController = self.context.sharedContext.makeStarsPurchaseScreen(
                         context: self.context,
                         starsContext: starsContext,
                         options: options ?? [],
@@ -2981,7 +2991,9 @@ private final class GiftViewSheetContent: CombinedComponent {
                                 proceed()
                             })
                         }
-                    )
+                    ) else {
+                        return
+                    }
                     controller.push(purchaseController)
                 })
             } else {
@@ -3078,7 +3090,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                     if let allowPaidStars {
                         finalStars += allowPaidStars
                     }
-                    let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
+                    guard let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
                         context: context,
                         starsContext: starsContext,
                         options: options ?? [],
@@ -3113,7 +3125,9 @@ private final class GiftViewSheetContent: CombinedComponent {
                                 });
                             })
                         }
-                    )
+                    ) else {
+                        return
+                    }
                     controller.push(purchaseController)
                 })
             } else if price.currency == .ton, let tonState = context.tonContext?.currentState, tonState.balance < price.amount {
@@ -5770,7 +5784,9 @@ private final class GiftViewSheetContent: CombinedComponent {
                                             action: { [weak controller, weak state] action in
                                                 if case .info = action {
                                                     controller?.dismissAllTooltips()
-                                                    let premiumController = context.sharedContext.makePremiumIntroController(context: context, source: .messageEffects, forceDark: false, dismissed: nil)
+                                                    guard let premiumController = context.sharedContext.makePremiumIntroController(context: context, source: .messageEffects, forceDark: false, dismissed: nil) else {
+                                                        return false
+                                                    }
                                                     controller?.push(premiumController)
                                                     
                                                     Queue.mainQueue().after(0.6, {
@@ -6029,7 +6045,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                         action: { [weak state] in
                             state?.updateSavedToProfile(!savedToProfile)
                         })
-            } else if !incoming, let resellAmount, !isMyOwnedUniqueGift {
+            } else if PremiumConfiguration.allowsPurchases, !incoming, let resellAmount, !isMyOwnedUniqueGift {
                 if state.cachedStarImage == nil || state.cachedStarImage?.1 !== theme {
                     state.cachedStarImage = (generateTintedImage(image: UIImage(bundleImageName: "Item List/PremiumIcon"), color: theme.list.itemCheckColors.foregroundColor)!, theme)
                 }
@@ -7266,7 +7282,7 @@ public class GiftViewScreen: ViewControllerComponentContainer {
                                 let _ = (context.engine.payments.starsTopUpOptions()
                                 |> take(1)
                                 |> deliverOnMainQueue).startStandalone(next: { options in
-                                    let controller = context.sharedContext.makeStarsPurchaseScreen(
+                                    guard let controller = context.sharedContext.makeStarsPurchaseScreen(
                                         context: context,
                                         starsContext: starsContext,
                                         options: options,
@@ -7274,7 +7290,9 @@ public class GiftViewScreen: ViewControllerComponentContainer {
                                         targetPeerId: nil,
                                         customTheme: nil,
                                         completion: { _ in }
-                                    )
+                                    ) else {
+                                        return
+                                    }
                                     navigationController.pushViewController(controller)
                                 })
                             case .ton:

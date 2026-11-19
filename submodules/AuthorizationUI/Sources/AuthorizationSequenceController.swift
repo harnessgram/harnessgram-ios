@@ -44,6 +44,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
     public var presentationData: PresentationData
     private let openUrl: (String) -> Void
     private let authorizationCompleted: () -> Void
+    private let openSample: (() -> Void)?
     
     private var stateDisposable: Disposable?
     private let actionDisposable = MetaDisposable()
@@ -63,7 +64,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
     
     private var inAppPurchaseManager: InAppPurchaseManager!
     
-    public init(sharedContext: SharedAccountContext, account: UnauthorizedAccount, otherAccountPhoneNumbers: ((String, AccountRecordId, Bool)?, [(String, AccountRecordId, Bool)]), presentationData: PresentationData, openUrl: @escaping (String) -> Void, apiId: Int32, apiHash: String, authorizationCompleted: @escaping () -> Void) {
+    public init(sharedContext: SharedAccountContext, account: UnauthorizedAccount, otherAccountPhoneNumbers: ((String, AccountRecordId, Bool)?, [(String, AccountRecordId, Bool)]), presentationData: PresentationData, openUrl: @escaping (String) -> Void, apiId: Int32, apiHash: String, openSample: (() -> Void)? = nil, authorizationCompleted: @escaping () -> Void) {
         self.sharedContext = sharedContext
         self.account = account
         self.otherAccountPhoneNumbers = otherAccountPhoneNumbers
@@ -72,6 +73,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
         self.presentationData = presentationData
         self.openUrl = openUrl
         self.authorizationCompleted = authorizationCompleted
+        self.openSample = openSample
         
         let navigationStatusBar: NavigationStatusBarStyle
         switch presentationData.theme.rootController.statusBarStyle {
@@ -140,7 +142,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
         if let currentController = currentController {
             controller = currentController
         } else {
-            controller = AuthorizationSequenceSplashController(accountManager: self.sharedContext.accountManager, account: self.account, theme: self.presentationData.theme)
+            controller = AuthorizationSequenceSplashController(accountManager: self.sharedContext.accountManager, account: self.account, theme: self.presentationData.theme, openSample: self.openSample)
             controller.nextPressed = { [weak self] strings in
                 if let strongSelf = self {
                     if let strings = strings {
@@ -155,6 +157,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                 }
             }
         }
+        controller.updateSampleLanguage(self.presentationData.strings.primaryComponent.languageCode)
         HarnessgramTestLogin.once("splash", controller, { [weak controller] in
             controller?.nextPressed?(nil)
         })

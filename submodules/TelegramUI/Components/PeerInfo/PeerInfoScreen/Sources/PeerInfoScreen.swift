@@ -2376,7 +2376,9 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     guard let strongSelf = self else {
                         return
                     }
-                    let controller = PremiumIntroScreen(context: strongSelf.context, source: source)
+                    guard let controller = PremiumIntroScreen(context: strongSelf.context, source: source) else {
+                        return
+                    }
                     controller.sourceView = sourceView
                     controller.containerView = strongSelf.controller?.navigationController?.view
                     controller.animationColor = white ? .white : strongSelf.presentationData.theme.list.itemAccentColor
@@ -4871,7 +4873,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     }
     
     func openPremiumGift() {
-        guard let controller = self.controller, !controller.presentAccountFrozenInfoIfNeeded() else {
+        guard PremiumConfiguration.allowsPurchases, let controller = self.controller, !controller.presentAccountFrozenInfoIfNeeded() else {
             return
         }
         let premiumGiftOptions = self.data?.premiumGiftOptions ?? []
@@ -4884,7 +4886,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         
         // The recipient is the peer the profile describes: on a secret chat's profile `peerId` is
         // the secret chat, which a gift cannot be sent to, and `data.peer` is the user.
-        let giftsController = self.context.sharedContext.makeGiftOptionsController(
+        guard let giftsController = self.context.sharedContext.makeGiftOptionsController(
             context: self.context,
             peerId: self.data?.peer?.id ?? self.peerId,
             premiumOptions: premiumOptions,
@@ -4897,7 +4899,9 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     profileGiftsContext.reload()
                 }
             }
-        )
+        ) else {
+            return
+        }
         controller.push(giftsController)
     }
     
@@ -5051,7 +5055,9 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                             location: .point(location, .top),
                             shouldDismissOnTouch: { [weak self] point, containerFrame in
                                 if containerFrame.contains(point) {
-                                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: false, dismissed: nil)
+                                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: false, dismissed: nil) else {
+                                        return .dismiss(consume: false)
+                                    }
                                     self?.controller?.push(controller)
                                     return .dismiss(consume: true)
                                 } else {

@@ -137,11 +137,13 @@ private final class GiftValueSheetContent: CombinedComponent {
             guard let controller = self.getController() as? GiftValueScreen else {
                 return
             }
-            let storeController = self.context.sharedContext.makeGiftStoreController(
+            guard let storeController = self.context.sharedContext.makeGiftStoreController(
                 context: self.context,
                 peerId: self.context.account.peerId,
                 gift: gift
-            )
+            ) else {
+                return
+            }
             controller.push(storeController)
         }
         

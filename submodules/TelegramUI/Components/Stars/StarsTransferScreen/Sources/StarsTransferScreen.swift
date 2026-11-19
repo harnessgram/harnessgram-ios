@@ -606,7 +606,7 @@ private final class SheetContent: CombinedComponent {
                                 } else {
                                     purpose = .generic
                                 }
-                                let purchaseController = accountContext.sharedContext.makeStarsPurchaseScreen(
+                                guard let purchaseController = accountContext.sharedContext.makeStarsPurchaseScreen(
                                     context: accountContext,
                                     starsContext: starsContext,
                                     options: state?.options ?? [],
@@ -623,7 +623,9 @@ private final class SheetContent: CombinedComponent {
                                             completion()
                                         })
                                     }
-                                )
+                                ) else {
+                                    return
+                                }
                                 controller?.push(purchaseController)
                             } else {
                                 let alertController = textAlertController(context: accountContext, title: nil, text: presentationData.strings.Stars_Transfer_Unavailable, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})])

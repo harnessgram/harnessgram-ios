@@ -13,13 +13,15 @@ public struct HarnessgramWaitingEntry: TimelineEntry {
     public let needsPairing: Bool
     /// The shared store was busy (the app held its lock): no account data, no answer buttons, not the pairing view.
     public let temporarilyUnavailable: Bool
+    public let isSample: Bool
 
-    public init(date: Date, snapshot: HarnessgramCockpitSnapshot?, canAnswerOnWidget: Bool, needsPairing: Bool = false, temporarilyUnavailable: Bool = false) {
+    public init(date: Date, snapshot: HarnessgramCockpitSnapshot?, canAnswerOnWidget: Bool, needsPairing: Bool = false, temporarilyUnavailable: Bool = false, isSample: Bool = false) {
         self.date = date
         self.snapshot = snapshot
         self.canAnswerOnWidget = canAnswerOnWidget
         self.needsPairing = needsPairing
         self.temporarilyUnavailable = temporarilyUnavailable
+        self.isSample = isSample
     }
 
     public static func unavailable(at date: Date) -> HarnessgramWaitingEntry {
@@ -27,6 +29,11 @@ public struct HarnessgramWaitingEntry: TimelineEntry {
     }
 
     public static let preview = HarnessgramWaitingEntry(date: HarnessgramCockpitSnapshot.sample.updatedAt.addingTimeInterval(120), snapshot: .sample, canAnswerOnWidget: true)
+
+    static func sampleEntry(now: Date) -> HarnessgramWaitingEntry? {
+        guard let snapshot = HarnessgramSampleStore.shared?.read()?.snapshot else { return nil }
+        return HarnessgramWaitingEntry(date: now, snapshot: snapshot, canAnswerOnWidget: false, isSample: true)
+    }
 }
 
 @available(iOS 17.0, *)
@@ -42,12 +49,18 @@ struct HarnessgramWaitingProvider: TimelineProvider {
             completion(.preview)
             return
         }
-        completion(HarnessgramWaitingProvider.snapshotEntry(store: .shared, now: Date()))
+        let now = Date()
+        completion(HarnessgramWaitingEntry.sampleEntry(now: now) ?? HarnessgramWaitingProvider.snapshotEntry(store: .shared, now: now))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<HarnessgramWaitingEntry>) -> Void) {
         Task {
-            completion(await HarnessgramWaitingProvider.timeline(store: .shared, client: HarnessgramCockpitClient(), now: Date()))
+            let now = Date()
+            if let sample = HarnessgramWaitingEntry.sampleEntry(now: now) {
+                completion(Timeline(entries: [sample], policy: .after(now.addingTimeInterval(Self.refreshInterval))))
+            } else {
+                completion(await HarnessgramWaitingProvider.timeline(store: .shared, client: HarnessgramCockpitClient(), now: now))
+            }
         }
     }
 

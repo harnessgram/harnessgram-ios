@@ -306,72 +306,24 @@ filegroup(
 )
 
 filegroup(
-    name = "AppIcons",
-    srcs = glob([
-        "Telegram-iOS/AppIcons.xcassets/**/*",
-    ], exclude = ["Telegram-iOS/AppIcons.xcassets/**/.*"]),
-)
-
-filegroup(
-    name = "DefaultAppIcon",
-    srcs = glob([
-        "Telegram-iOS/DefaultAppIcon.xcassets/**/*",
-    ], exclude = ["Telegram-iOS/DefaultAppIcon.xcassets/**/.*"]),
-)
-
-filegroup(
-    name = "DefaultIcon",
-    srcs = glob([
-        "Telegram-iOS/AppIcons.xcassets/BlueIcon.appiconset/*.png",
-    ]),
-)
-
-alternate_icon_folders = [
-    "BlackIcon",
-    "BlackClassicIcon",
-    "BlackFilledIcon",
-    "BlueIcon",
-    "BlueClassicIcon",
-    "BlueFilledIcon",
-    "WhiteFilledIcon",
-    "New1",
-    "New2",
-    "Premium",
-    "PremiumBlack",
-    "PremiumTurbo",
-    # Harnessgram House: the House icon, offered in Settings > Harnessgram while previewing. The owner swaps the
-    # primary icon later (HarnessgramAppIcon.xcassets) and the Telegram alternates go away then.
-    "HouseIcon",
-]
-
-# Harnessgram: the Telegram Icon Composer bundle (Telegram.icon) was removed; the primary icon is the
-# owner-chosen artwork in HarnessgramAppIcon.xcassets (all iPhone/iPad sizes + 1024 marketing).
-composer_icon_folders = []
-
-filegroup(
     name = "HarnessgramAppIcon",
     srcs = glob([
         "Telegram-iOS/HarnessgramAppIcon.xcassets/**/*",
     ], exclude = ["Telegram-iOS/HarnessgramAppIcon.xcassets/**/.*"]),
 )
 
-[
-    filegroup(
-        name = "{}".format(name),
-        srcs = glob([
-            "Telegram-iOS/{}.alticon/*.png".format(name),
-        ]),
-    ) for name in alternate_icon_folders
-]
+filegroup(
+    name = "HouseIcon",
+    srcs = glob(["Telegram-iOS/HouseIcon.alticon/*.png"]),
+)
 
-[
-    filegroup(
-        name = "{}_icon".format(name),
-        srcs = glob([
-            "Telegram-iOS/{}.icon/**/*".format(name),
-        ]),
-    ) for name in composer_icon_folders
-]
+# Keep the picker thumbnail sourced from the same artwork as the primary app icon.
+genrule(
+    name = "HarnessgramAppIconPreview",
+    srcs = ["Telegram-iOS/HarnessgramAppIcon.xcassets/AppIcon.appiconset/Icon-1024.png"],
+    outs = ["HarnessgramAppIconPreview.png"],
+    cmd = "cp $< $@",
+)
 
 filegroup(
     name = "LaunchScreen",
@@ -945,33 +897,6 @@ genrule(
     ]
 )
 
-genrule(
-    name = "GenerateAddAlternateIcons",
-    srcs = [
-        "Telegram-iOS/AddAlternateIcons.sh",
-    ],
-    cmd_bash =
-"""
-    cat $(location Telegram-iOS/AddAlternateIcons.sh) >> $(location AddAlternateIcons.sh)
-""",
-    outs = [
-        "AddAlternateIcons.sh",
-    ],
-    executable = True,
-    visibility = [
-        "//visibility:public",
-    ]
-)
-
-sh_binary(
-    name = "AddAlternateIcons",
-    data = [
-        "Telegram-iOS/AlternateIcons.plist",
-        "Telegram-iOS/AlternateIcons-iPad.plist",
-    ],
-    srcs = [":GenerateAddAlternateIcons"],
-)
-
 plist_fragment(
     name = "TelegramUIInfoPlist",
     extension = "plist",
@@ -1009,6 +934,7 @@ framework_exported_symbols(
         ":ShareExtensionLib",
         ":NotificationContentExtensionLib",
         ":BroadcastUploadExtensionLib",
+        "//submodules/HarnessgramAppIntents:HarnessgramAppIntents",
         "//Telegram/NotificationService:NotificationServiceExtensionLib",
     ],
 )
@@ -1063,7 +989,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.Share</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>HarnessGram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1147,6 +1073,7 @@ ios_extension(
         ":BuildNumberInfoPlist",
         ":AppNameInfoPlist",
     ],
+    resources = ["Share/PrivacyInfo.xcprivacy"],
     minimum_os_version = minimum_os_version,
     provisioning_profile = select({
         ":disableProvisioningProfilesSetting": None,
@@ -1168,7 +1095,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.NotificationContent</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>HarnessGram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1254,6 +1181,7 @@ ios_extension(
         ":BuildNumberInfoPlist",
         ":AppNameInfoPlist",
     ],
+    resources = ["NotificationContent/PrivacyInfo.xcprivacy"],
     minimum_os_version = minimum_os_version, # maintain the same minimum OS version across extensions
     #ipa_post_processor = ":SetMinOsVersionNotificationContentExtension",
     provisioning_profile = select({
@@ -1276,7 +1204,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.Widget</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>HarnessGram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1363,6 +1291,7 @@ ios_extension(
         ":BuildNumberInfoPlist",
         ":AppNameInfoPlist",
     ],
+    resources = ["WidgetKitWidget/PrivacyInfo.xcprivacy"],
     minimum_os_version = minimum_os_version, # maintain the same minimum OS version across extensions
     # Deliberately NOT patched down: this used to stamp MinimumOSVersion=14.0 so a WidgetKit
     # extension could ship while the app min was 13.0. Now that the app min is >= 14, stamping
@@ -1401,7 +1330,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.SiriIntents</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>HarnessGram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1541,6 +1470,7 @@ ios_extension(
         ":BuildNumberInfoPlist",
         ":AppNameInfoPlist",
     ],
+    resources = ["SiriIntents/PrivacyInfo.xcprivacy"],
     minimum_os_version = minimum_os_version, # maintain the same minimum OS version across extensions
     #ipa_post_processor = ":SetMinOsVersionIntentsExtension",
     provisioning_profile = select({
@@ -1565,7 +1495,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.BroadcastUpload</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>HarnessGram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1636,6 +1566,7 @@ ios_extension(
         ":BuildNumberInfoPlist",
         ":AppNameInfoPlist",
     ],
+    resources = ["BroadcastUpload/PrivacyInfo.xcprivacy"],
     minimum_os_version = minimum_os_version, # maintain the same minimum OS version across extensions
     #ipa_post_processor = ":SetMinOsVersionBroadcastUploadExtension",
     provisioning_profile = select({
@@ -1659,7 +1590,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.NotificationService</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>HarnessGram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1697,6 +1628,7 @@ ios_extension(
         ":BuildNumberInfoPlist",
         ":AppNameInfoPlist",
     ],
+    resources = ["//Telegram/NotificationService:PrivacyInfo.xcprivacy"],
     minimum_os_version = minimum_os_version, # maintain the same minimum OS version across extensions
     provisioning_profile = select({
         ":disableProvisioningProfilesSetting": None,
@@ -1732,7 +1664,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>HarnessGram</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -1788,27 +1720,29 @@ plist_fragment(
         <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>We need this so that you can take and share photos and videos.</string>
+    <string>HarnessGram uses the camera to take photos and videos to share and to make video calls.</string>
     <key>NSContactsUsageDescription</key>
-    <string>Telegram stores your contacts heavily encrypted in the cloud to let you connect with your friends across all your devices.</string>
+    <string>If you enable contact sync, HarnessGram uploads your contacts to Telegram’s encrypted cloud so you can find friends who use the service.</string>
     <key>NSFaceIDUsageDescription</key>
-    <string>You can use Face ID to unlock the app.</string>
+    <string>HarnessGram uses Face ID to unlock the app and confirm sensitive actions.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>When you send your location to your friends, Telegram needs access to show them a map. You also need this to send locations from an Apple Watch.</string>
+    <string>When you share your live location, HarnessGram updates it in the background until sharing ends.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>When you share your live location, HarnessGram updates it in the background until sharing ends.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>When you send your location to your friends, Telegram needs access to show them a map.</string>
+    <string>HarnessGram uses your location to show it on the map when you choose to share it in a chat.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>We need this so that you can record and share voice messages and videos with sound.</string>
+    <string>HarnessGram uses the microphone for calls and to record voice messages and videos with sound.</string>
     <key>NSMotionUsageDescription</key>
-    <string>When you send your location to your friends, Telegram needs access to show them a map.</string>
+    <string>HarnessGram uses motion sensors to orient the camera and to support motion controls in mini apps you open.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>We need this so that you can share photos and videos from your photo library.</string>
+    <string>HarnessGram saves photos and videos you select to your photo library.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need this so that you can share photos and videos from your photo library.</string>
+    <string>HarnessGram lets you select photos and videos from your library to share.</string>
     <key>NSSiriUsageDescription</key>
-    <string>You can use Siri to send messages.</string>
+    <string>HarnessGram lets you use Siri to send messages.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
-    <string>We need this to transcribe audio messages on your request.</string>
+    <string>HarnessGram uses speech recognition to transcribe audio messages when you request it.</string>
     <key>NSUserActivityTypes</key>
     <array>
         <string>INSendMessageIntent</string>
@@ -1881,10 +1815,6 @@ plist_fragment(
             </array>
             <key>UTTypeDescription</key>
             <string>Telegram iOS Color Theme File</string>
-            <key>UTTypeIconFiles</key>
-            <array>
-                <string>BlueIcon@3x.png</string>
-            </array>
             <key>UTTypeIdentifier</key>
             <string>org.telegram.Telegram-iOS.theme</string>
             <key>UTTypeTagSpecification</key>
@@ -1974,14 +1904,13 @@ ios_application(
         ":HarnessgramLiveActivitiesInfoPlist",
     ],
     app_icons = [":HarnessgramAppIcon"],
-    alternate_icons = [
-        ":{}".format(name) for name in alternate_icon_folders
-    ],
+    alternate_icons = [":HouseIcon"],
     resources = [
         ":LaunchScreen",
         ":HarnessgramConfig",
         "//submodules/HarnessgramFonts:FontFiles",
-        #":DefaultAppIcon",
+        ":HarnessgramAppIconPreview",
+        "Telegram-iOS/PrivacyInfo.xcprivacy",
     ],
     frameworks = [
         ":MtProtoKitFramework",

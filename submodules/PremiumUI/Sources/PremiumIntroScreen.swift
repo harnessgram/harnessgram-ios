@@ -2024,7 +2024,7 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
             let updateIsFocused = context.component.updateIsFocused
             
             let layoutOptions = {
-                if let products = state.products, products.count > 1, state.isPremium == false || (!context.component.justBought && state.canUpgrade) {
+                if PremiumConfiguration.allowsPurchases, let products = state.products, products.count > 1, state.isPremium == false || (!context.component.justBought && state.canUpgrade) {
                     var optionsItems: [SectionGroupComponent.Item] = []
                     
                     let shortestProductPrice: (Int64, NSDecimalNumber)
@@ -2265,7 +2265,7 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
 
                             let isPremium = state?.isPremium == true
                             let buttonText: String
-                            if isPremium {
+                            if !PremiumConfiguration.allowsPurchases || isPremium {
                                 buttonText = strings.Common_OK
                             } else {
                                 if state?.isAnnual == true {
@@ -2502,7 +2502,7 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
                                 
                                 
                                 let buttonText: String
-                                if isPremium {
+                                if !PremiumConfiguration.allowsPurchases || isPremium {
                                     buttonText = strings.Common_OK
                                 } else {
                                     if state?.isAnnual == true {
@@ -3307,7 +3307,8 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                 return
             }
             
-            guard let inAppPurchaseManager = self.screenContext.inAppPurchaseManager,
+            guard PremiumConfiguration.allowsPurchases,
+                  let inAppPurchaseManager = self.screenContext.inAppPurchaseManager,
                   let premiumProduct = self.products?.first(where: { $0.id == self.selectedProductId }) else {
                 return
             }
@@ -3883,9 +3884,7 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
             if !state.justBought {
                 if isUnusedGift {
                     buttonIsHidden = false
-                } else if state.canUpgrade {
-                    buttonIsHidden = false
-                } else if !(state.isPremium ?? false) {
+                } else if PremiumConfiguration.allowsPurchases && (state.canUpgrade || !(state.isPremium ?? false)) {
                     buttonIsHidden = false
                 }
             }
@@ -4112,11 +4111,23 @@ public final class PremiumIntroScreen: ViewControllerComponentContainer {
     
     private let overNavigationContainer: UIView
     
-    public convenience init(context: AccountContext, mode: Mode = .premium, source: PremiumSource, modal: Bool = true, forceDark: Bool = false, forceHasPremium: Bool = false, focusOnItemTag: PremiumIntroEntryTag? = nil) {
+    public convenience init?(context: AccountContext, mode: Mode = .premium, source: PremiumSource, modal: Bool = true, forceDark: Bool = false, forceHasPremium: Bool = false, focusOnItemTag: PremiumIntroEntryTag? = nil) {
         self.init(screenContext: .accountContext(context), mode: mode, source: source, modal: modal, forceDark: forceDark, forceHasPremium: forceHasPremium, focusOnItemTag: focusOnItemTag)
     }
     
-    public init(screenContext: ScreenContext, mode: Mode = .premium, source: PremiumSource, modal: Bool = true, forceDark: Bool = false, forceHasPremium: Bool = false, focusOnItemTag: PremiumIntroEntryTag? = nil) {
+    public init?(screenContext: ScreenContext, mode: Mode = .premium, source: PremiumSource, modal: Bool = true, forceDark: Bool = false, forceHasPremium: Bool = false, focusOnItemTag: PremiumIntroEntryTag? = nil) {
+        if !PremiumConfiguration.allowsPurchases && !forceHasPremium {
+            switch source {
+            case .gift, .giftTerms:
+                break
+            case .emojiStatus where screenContext.context?.isPremium == true:
+                break
+            default:
+                guard case .business = mode, screenContext.context?.isPremium == true else {
+                    return nil
+                }
+            }
+        }
         self.screenContext = screenContext
         self.mode = mode
         self.focusOnItemTag = focusOnItemTag

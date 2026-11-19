@@ -1901,7 +1901,9 @@ public class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
                             let context = item.context
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .voiceToText, forceDark: false, action: {
-                                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil)
+                                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil) else {
+                                    return
+                                }
                                 replaceImpl?(controller)
                             }, dismissed: nil)
                             replaceImpl = { [weak controller] c in
@@ -2013,7 +2015,9 @@ public class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
             if case .info = action {
                 var replaceImpl: ((ViewController) -> Void)?
                 let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .voiceToText, forceDark: false, action: {
-                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil)
+                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil) else {
+                        return
+                    }
                     replaceImpl?(controller)
                 }, dismissed: nil)
                 replaceImpl = { [weak controller] c in

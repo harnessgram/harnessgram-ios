@@ -78,7 +78,9 @@ extension ChatControllerImpl {
                                         return false
                                     }
                                     if case .info = action {
-                                        let controller = self.context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil)
+                                        guard let controller = self.context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil) else {
+                                            return false
+                                        }
                                         self.push(controller)
                                     }
                                     return false
@@ -109,7 +111,9 @@ extension ChatControllerImpl {
                                         return false
                                     }
                                     if case .info = action {
-                                        let controller = self.context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil)
+                                        guard let controller = self.context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil) else {
+                                            return false
+                                        }
                                         self.push(controller)
                                     }
                                     return false

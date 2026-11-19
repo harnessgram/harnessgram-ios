@@ -46,14 +46,14 @@ final class UnauthorizedApplicationContext {
 
     private var serviceNotificationEventsDisposable: Disposable?
     
-    init(apiId: Int32, apiHash: String, sharedContext: SharedAccountContextImpl, account: UnauthorizedAccount, otherAccountPhoneNumbers: ((String, AccountRecordId, Bool)?, [(String, AccountRecordId, Bool)])) {
+    init(apiId: Int32, apiHash: String, sharedContext: SharedAccountContextImpl, account: UnauthorizedAccount, otherAccountPhoneNumbers: ((String, AccountRecordId, Bool)?, [(String, AccountRecordId, Bool)]), openSample: (() -> Void)? = nil) {
         self.sharedContext = sharedContext
         self.account = account
         let presentationData = sharedContext.currentPresentationData.with { $0 }
         
         var authorizationCompleted: (() -> Void)?
         
-        self.rootController = AuthorizationSequenceController(sharedContext: sharedContext, account: account, otherAccountPhoneNumbers: otherAccountPhoneNumbers, presentationData: presentationData, openUrl: sharedContext.applicationBindings.openUrl, apiId: apiId, apiHash: apiHash, authorizationCompleted: {
+        self.rootController = AuthorizationSequenceController(sharedContext: sharedContext, account: account, otherAccountPhoneNumbers: otherAccountPhoneNumbers, presentationData: presentationData, openUrl: sharedContext.applicationBindings.openUrl, apiId: apiId, apiHash: apiHash, openSample: openSample, authorizationCompleted: {
             authorizationCompleted?()
         })
         (self.rootController as NavigationController).statusBarHost = sharedContext.mainWindow?.statusBarHost
@@ -64,14 +64,8 @@ final class UnauthorizedApplicationContext {
         
         self.isReady.set(self.rootController.ready.get())
         
-        account.shouldBeServiceTaskMaster.set(sharedContext.applicationBindings.applicationInForeground |> map { value -> AccountServiceTaskMasterMode in
-            if value {
-                return .always
-            } else {
-                return .never
-            }
-        })
-        
+        self.setWelcomeConnectionPaused(false)
+
         DeviceAccess.authorizeAccess(to: .cellularData, presentationData: sharedContext.currentPresentationData.with { $0 }, present: { [weak self] c, a in
             if let strongSelf = self {
                 (strongSelf.rootController.viewControllers.last as? ViewController)?.present(c, in: .window(.root))
@@ -84,11 +78,29 @@ final class UnauthorizedApplicationContext {
 
         self.serviceNotificationEventsDisposable = (account.serviceNotificationEvents
         |> deliverOnMainQueue).start(next: { [weak self] text in
-            if let strongSelf = self {
+            if let strongSelf = self, !strongSelf.welcomeConnectionPaused {
                 let presentationData = strongSelf.sharedContext.currentPresentationData.with { $0 }
                 let alertController = textAlertController(sharedContext: strongSelf.sharedContext, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})])
 
                 (strongSelf.rootController.viewControllers.last as? ViewController)?.present(alertController, in: .window(.root))
+            }
+        })
+    }
+
+    private var welcomeConnectionPaused = false
+
+    func setWelcomeConnectionPaused(_ paused: Bool) {
+        if self.welcomeConnectionPaused != paused {
+            self.account.setLoginConnectionPreparationPaused(paused)
+            self.rootController.view.isUserInteractionEnabled = !paused
+        }
+        self.welcomeConnectionPaused = paused
+        let foreground: Signal<Bool, NoError> = paused ? .single(false) : self.sharedContext.applicationBindings.applicationInForeground
+        self.account.shouldBeServiceTaskMaster.set(foreground |> map { value -> AccountServiceTaskMasterMode in
+            if value {
+                return .always
+            } else {
+                return .never
             }
         })
     }

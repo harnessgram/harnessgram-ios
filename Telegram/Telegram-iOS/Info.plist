@@ -11,76 +11,19 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>${APP_NAME}</string>
+	<string>HarnessGram</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIcons</key>
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>Black</key>
+			<key>HouseIcon</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>BlackIcon</string>
-					<string>BlackNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackClassicIcon</string>
-					<string>BlackClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackFilledIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>Blue</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueIcon</string>
-					<string>BlueNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueClassicIcon</string>
-					<string>BlueClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueFilledIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>WhiteFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>WhiteFilledIcon</string>
+					<string>HouseIcon</string>
+					<string>HouseNotificationIcon</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<true/>
@@ -89,7 +32,7 @@
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
 			<key>CFBundleIconName</key>
-			<string>AppIconLLC</string>
+			<string>AppIcon</string>
 			<key>UIPrerenderedIcon</key>
 			<true/>
 		</dict>
@@ -98,75 +41,13 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>Black</key>
+			<key>HouseIcon</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>BlackIconIpad</string>
-					<string>BlackIconLargeIpad</string>
-					<string>BlackNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackClassicIconIpad</string>
-					<string>BlackClassicIconLargeIpad</string>
-					<string>BlackClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackFilledIconIpad</string>
-					<string>BlackFilledIconLargeIpad</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>Blue</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueIconIpad</string>
-					<string>BlueIconLargeIpad</string>
-					<string>BlueNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueClassicIconIpad</string>
-					<string>BlueClassicIconLargeIpad</string>
-					<string>BlueClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueFilledIconIpad</string>
-					<string>BlueFilledIconLargeIpad</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>WhiteFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>WhiteFilledIcon</string>
+					<string>HouseIconIpad</string>
+					<string>HouseIconLargeIpad</string>
+					<string>HouseNotificationIcon</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<true/>
@@ -175,7 +56,7 @@
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
 			<key>CFBundleIconName</key>
-			<string>AppIconLLC</string>
+			<string>AppIcon</string>
 			<key>UIPrerenderedIcon</key>
 			<true/>
 		</dict>
@@ -185,7 +66,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>HarnessGram</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -274,25 +155,29 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>We need this so that you can take and share photos and videos.</string>
+	<string>HarnessGram uses the camera to take photos and videos to share and to make video calls.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Telegram stores your contacts heavily encrypted in the cloud to let you connect with your friends across all your devices.</string>
+	<string>If you enable contact sync, HarnessGram uploads your contacts to Telegram’s encrypted cloud so you can find friends who use the service.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>You can use Face ID to unlock the app.</string>
+	<string>HarnessGram uses Face ID to unlock the app and confirm sensitive actions.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>When you send your location to your friends, Telegram needs access to show them a map. You also need this to send locations from an Apple Watch.</string>
+	<string>When you share your live location, HarnessGram updates it in the background until sharing ends.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>When you share your live location, HarnessGram updates it in the background until sharing ends.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>When you send your location to your friends, Telegram needs access to show them a map.</string>
+	<string>HarnessGram uses your location to show it on the map when you choose to share it in a chat.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We need this so that you can record and share voice messages and videos with sound.</string>
+	<string>HarnessGram uses the microphone for calls and to record voice messages and videos with sound.</string>
 	<key>NSMotionUsageDescription</key>
-	<string>When you send your location to your friends, Telegram needs access to show them a map.</string>
+	<string>HarnessGram uses motion sensors to orient the camera and to support motion controls in mini apps you open.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>We need this so that you can share photos and videos from your photo library.</string>
+	<string>HarnessGram saves photos and videos you select to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need this so that you can share photos and videos from your photo library.</string>
+	<string>HarnessGram lets you select photos and videos from your library to share.</string>
 	<key>NSSiriUsageDescription</key>
-	<string>You can use Siri to send messages.</string>
+	<string>HarnessGram lets you use Siri to send messages.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>HarnessGram uses speech recognition to transcribe audio messages when you request it.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>INSendMessageIntent</string>
@@ -355,10 +240,6 @@
 			</array>
 			<key>UTTypeDescription</key>
 			<string>Telegram iOS Color Theme File</string>
-			<key>UTTypeIconFiles</key>
-			<array>
-				<string>BlueIcon@3x.png</string>
-			</array>
 			<key>UTTypeIdentifier</key>
 			<string>org.telegram.Telegram-iOS.theme</string>
 			<key>UTTypeTagSpecification</key>

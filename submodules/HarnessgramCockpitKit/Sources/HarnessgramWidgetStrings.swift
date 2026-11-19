@@ -3,6 +3,7 @@ import Foundation
 /// The widgets' and the Live Activity's copy. English names inside a Hebrew line are wrapped in
 /// bidi isolates (U+2068 ... U+2069).
 public enum HarnessgramWidgetStrings {
+    public static let sampleData = "נתוני דוגמה"
     public static let isRightToLeft = true
 
     /// Today follows the preferred languages, with Hebrew as the fallback.

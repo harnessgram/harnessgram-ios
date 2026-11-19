@@ -19,6 +19,10 @@ public struct HarnessgramWhatsWaitingIntent: AppIntent {
 
     public func perform() async throws -> some IntentResult & ProvidesDialog {
         let now = Date()
+        if let sample = HarnessgramSampleStore.shared?.read() {
+            let text = HarnessgramWidgetStrings.sampleData + ". " + HarnessgramCarSummary.spokenSummary(snapshot: sample.snapshot, paired: true, now: sample.snapshot.updatedAt)
+            return .result(dialog: IntentDialog(stringLiteral: text))
+        }
         // One locked read of session, snapshot and login (the widgets' rule); nothing read means "connect the bridge".
         let context = HarnessgramCockpitStore.shared.answerContext()
         let text = HarnessgramCarSummary.spokenSummary(snapshot: context?.snapshot, paired: context != nil, now: now)
@@ -33,6 +37,7 @@ public struct HarnessgramAppShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: HarnessgramWhatsWaitingIntent(),
             phrases: [
+                "What's waiting in \(.applicationName)",
                 "מה מחכה לי ב־\(.applicationName)",
                 "מה חדש ב־\(.applicationName)",
                 "\(.applicationName) מה מחכה לי"

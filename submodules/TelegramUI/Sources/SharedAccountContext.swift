@@ -3188,7 +3188,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return chatListFilterPresetListController(context: context, mode: modal ? .modal : .default, scrollToTags: scrollToTags, dismissed: dismissed)
     }
     
-    public func makeBusinessSetupScreen(context: AccountContext) -> ViewController {
+    public func makeBusinessSetupScreen(context: AccountContext) -> ViewController? {
         return PremiumIntroScreen(context: context, mode: .business, source: .settings, modal: false, forceDark: false)
     }
     
@@ -3374,22 +3374,26 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return mappedSource
     }
     
-    public func makePremiumIntroController(context: AccountContext, source: PremiumIntroSource, forceDark: Bool, dismissed: (() -> Void)?) -> ViewController {
+    public func makePremiumIntroController(context: AccountContext, source: PremiumIntroSource, forceDark: Bool, dismissed: (() -> Void)?) -> ViewController? {
         var modal = true
         if case .settings = source {
             modal = false
         }
-        let controller = PremiumIntroScreen(context: context, source: self.mapIntroSource(source: source), modal: modal, forceDark: forceDark)
+        guard let controller = PremiumIntroScreen(context: context, source: self.mapIntroSource(source: source), modal: modal, forceDark: forceDark) else {
+            return nil
+        }
         controller.wasDismissed = dismissed
         return controller
     }
     
-    public func makePremiumIntroController(sharedContext: SharedAccountContext, engine: TelegramEngineUnauthorized, inAppPurchaseManager: InAppPurchaseManager, source: PremiumIntroSource, proceed: (() -> Void)?) -> ViewController {
+    public func makePremiumIntroController(sharedContext: SharedAccountContext, engine: TelegramEngineUnauthorized, inAppPurchaseManager: InAppPurchaseManager, source: PremiumIntroSource, proceed: (() -> Void)?) -> ViewController? {
         var modal = true
         if case .settings = source {
             modal = false
         }
-        let controller = PremiumIntroScreen(screenContext: .sharedContext(sharedContext, engine, inAppPurchaseManager), source: self.mapIntroSource(source: source), modal: modal)
+        guard let controller = PremiumIntroScreen(screenContext: .sharedContext(sharedContext, engine, inAppPurchaseManager), source: self.mapIntroSource(source: source), modal: modal) else {
+            return nil
+        }
         controller.customProceed = proceed
         return controller
     }
@@ -3505,7 +3509,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return PremiumLimitScreen(context: context, subject: mappedSubject, count: count, forceDark: forceDark, cancel: cancel, action: action)
     }
     
-    public func makeStarsGiftController(context: AccountContext, birthdays: [EnginePeer.Id: TelegramBirthday]?, completion: @escaping (([EnginePeer.Id]) -> Void)) -> ViewController {
+    public func makeStarsGiftController(context: AccountContext, birthdays: [EnginePeer.Id: TelegramBirthday]?, completion: @escaping (([EnginePeer.Id]) -> Void)) -> ViewController? {
+        guard PremiumConfiguration.allowsPurchases else {
+            return nil
+        }
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
 
         var presentBirthdayPickerImpl: (() -> Void)?
@@ -3574,7 +3581,15 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return controller
     }
     
-    public func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?, withdraw: ((StarGiftReference, String?) -> Signal<Never, WithdrawStarGiftError>)?) -> ViewController {
+    public func makePremiumGiftController(context: AccountContext, source: PremiumGiftSource, completion: (([EnginePeer.Id]) -> Signal<Never, TransferStarGiftError>)?, withdraw: ((StarGiftReference, String?) -> Signal<Never, WithdrawStarGiftError>)?) -> ViewController? {
+        switch source {
+        case .starGiftTransfer, .starGiftDeposit:
+            break
+        default:
+            guard PremiumConfiguration.allowsPurchases else {
+                return nil
+            }
+        }
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
 
         var presentExportAlertImpl: (() -> Void)?
@@ -4005,7 +4020,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                             |> filter { $0 != nil }
                             |> take(1)
                             |> deliverOnMainQueue).startStandalone(next: { [weak controller] options in
-                                let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
+                                guard let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
                                     context: context,
                                     starsContext: starsContext,
                                     options: options ?? [],
@@ -4016,7 +4031,9 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                                         starsContext.add(balance: StarsAmount(value: stars, nanos: 0))
                                         proceed(true)
                                     }
-                                )
+                                ) else {
+                                    return
+                                }
                                 controller?.push(purchaseController)
                             })
                         } else {
@@ -4037,7 +4054,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return controller
     }
     
-    public func makeGiftOptionsController(context: AccountContext, peerId: EnginePeer.Id, premiumOptions: [CachedPremiumGiftOption], hasBirthday: Bool, completion: (() -> Void)?) -> ViewController {
+    public func makeGiftOptionsController(context: AccountContext, peerId: EnginePeer.Id, premiumOptions: [CachedPremiumGiftOption], hasBirthday: Bool, completion: (() -> Void)?) -> ViewController? {
+        guard PremiumConfiguration.allowsPurchases else {
+            return nil
+        }
         guard let starsContext = context.starsContext else {
             fatalError()
         }
@@ -4046,7 +4066,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return controller
     }
     
-    public func makeGiftCollectiblesController(context: AccountContext, peerId: EnginePeer.Id) -> ViewController {
+    public func makeGiftCollectiblesController(context: AccountContext, peerId: EnginePeer.Id) -> ViewController? {
+        guard PremiumConfiguration.allowsPurchases else {
+            return nil
+        }
         guard let starsContext = context.starsContext else {
             fatalError()
         }
@@ -4055,7 +4078,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return controller
     }
     
-    public func makeGiftStoreController(context: AccountContext, peerId: EnginePeer.Id, gift: StarGift.Gift) -> ViewController {
+    public func makeGiftStoreController(context: AccountContext, peerId: EnginePeer.Id, gift: StarGift.Gift) -> ViewController? {
+        guard PremiumConfiguration.allowsPurchases else {
+            return nil
+        }
         let controller = GiftStoreScreen(context: context, peerId: peerId, gift: gift)
         return controller
     }
@@ -4148,7 +4174,9 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             guard let parentController = controller else {
                 return
             }
-            let controller = context.sharedContext.makePremiumIntroController(context: context, source: introSource, forceDark: false, dismissed: nil)
+            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: introSource, forceDark: false, dismissed: nil) else {
+                return
+            }
             parentController.push(controller)
         }
                 
@@ -4561,7 +4589,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return StarsTransactionsScreen(context: context, starsContext: starsContext)
     }
         
-    public func makeStarsPurchaseScreen(context: AccountContext, starsContext: StarsContext, options: [Any], purpose: StarsPurchasePurpose, targetPeerId: EnginePeer.Id?, customTheme: PresentationTheme?, completion: @escaping (Int64) -> Void) -> ViewController {
+    public func makeStarsPurchaseScreen(context: AccountContext, starsContext: StarsContext, options: [Any], purpose: StarsPurchasePurpose, targetPeerId: EnginePeer.Id?, customTheme: PresentationTheme?, completion: @escaping (Int64) -> Void) -> ViewController? {
+        guard PremiumConfiguration.allowsPurchases else {
+            return nil
+        }
         return StarsPurchaseScreen(context: context, starsContext: starsContext, options: options, purpose: purpose, targetPeerId: targetPeerId, customTheme: customTheme, completion: completion)
     }
         

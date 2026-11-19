@@ -5428,7 +5428,9 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                     let context = self.context
                     var replaceImpl: ((ViewController) -> Void)?
                     let demoController = context.sharedContext.makePremiumDemoController(context: context, subject: .stories, forceDark: true, action: {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesLinks, forceDark: true, dismissed: {})
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesLinks, forceDark: true, dismissed: {}) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     }, dismissed: {})
                     replaceImpl = { [weak self, weak demoController] c in
@@ -7007,7 +7009,7 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
             let controller = self.context.sharedContext.makePremiumLimitController(context: self.context, subject: subject, count: 10, forceDark: true, cancel: { [weak self] in
                 self?.requestDismiss(saveDraft: false, animated: true)
             }, action: { [weak self] in
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: { [weak self] in
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: { [weak self] in
                     guard let self else {
                         return
                     }
@@ -7021,7 +7023,9 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                             self.requestDismiss(saveDraft: false, animated: true)
                         }
                     })
-                })
+                }) else {
+                    return false
+                }
                 replaceImpl?(controller)
                 return true
             })
@@ -7377,7 +7381,9 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                 
         let controller = UndoOverlayController(presentationData: presentationData, content: .autoDelete(isOn: true, title: nil, text: text, customUndoText: nil), elevatedLayout: false, position: .top, animateInAsReplacement: false, action: { [weak self] action in
             if case .info = action, let self {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil) else {
+                    return false
+                }
                 self.push(controller)
             }
             return false
@@ -7426,7 +7432,9 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                         self.node.stickerScreen = nil
                         stickerScreen.dismiss(animated: true)
                     }
-                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesSuggestedReactions, forceDark: true, dismissed: nil)
+                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesSuggestedReactions, forceDark: true, dismissed: nil) else {
+                        return false
+                    }
                     self.push(controller)
                 }
                 return true
@@ -7445,7 +7453,9 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
         
         let controller = UndoOverlayController(presentationData: presentationData, content: .sticker(context: context, file: file, loop: true, title: nil, text: presentationData.strings.Story_Editor_TooltipPremiumReaction, undoText: nil, customAction: nil), elevatedLayout: true, position: .top, animateInAsReplacement: false, appearance: UndoOverlayController.Appearance(isBlurred: true), action: { [weak self] action in
             if case .info = action, let self {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil) else {
+                    return false
+                }
                 self.push(controller)
             }
             return false
@@ -7464,9 +7474,11 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                 
         let controller = UndoOverlayController(presentationData: presentationData, content: .universal(animation: "anim_read", scale: 0.25, colors: [:], title: title, text: text, customUndoText: nil, timeout: nil), elevatedLayout: false, position: .top, animateInAsReplacement: false, action: { [weak self] action in
             if case .info = action, let self {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: {
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .stories, forceDark: true, dismissed: {
                     
-                })
+                }) else {
+                    return false
+                }
                 self.push(controller)
             }
             return false
@@ -7484,7 +7496,9 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                 
         let controller = UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: text), elevatedLayout: false, position: .top, animateInAsReplacement: false, action: { [weak self] action in
             if case .info = action, let self {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesFormatting, forceDark: true, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesFormatting, forceDark: true, dismissed: nil) else {
+                    return false
+                }
                 self.push(controller)
             }
             return false }

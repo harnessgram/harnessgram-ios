@@ -1596,7 +1596,9 @@ public func selectivePrivacySettingsController(
         }
     }, copyPhoneLink: { link in
         if link == "premium" {
-            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil)
+            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil) else {
+                return
+            }
             pushControllerImpl?(controller, true)
         } else {
             UIPasteboard.general.string = link
@@ -1632,15 +1634,18 @@ public func selectivePrivacySettingsController(
             return state.withUpdatedHideReadTimeEnabled(value)
         }
     } : nil, openPremiumIntro: {
-        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil)
+        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil) else {
+            return
+        }
         pushControllerImpl?(controller, true)
     }, displayLockedInfo: {
         let presentationData = context.sharedContext.currentPresentationData.with({ $0 })
         presentControllerImpl?(UndoOverlayController(presentationData: presentationData, content: .premiumPaywall(title: presentationData.strings.Privacy_Messages_PremiumToast_Title, text: presentationData.strings.Privacy_Messages_PremiumToast_Text, customUndoText: presentationData.strings.Privacy_Messages_PremiumToast_Action, timeout: nil, linkAction: { _ in
         }), elevatedLayout: false, action: { action in
             if case .undo = action {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil)
-                pushControllerImpl?(controller, true)
+                if let controller = context.sharedContext.makePremiumIntroController(context: context, source: .presence, forceDark: false, dismissed: nil) {
+                    pushControllerImpl?(controller, true)
+                }
             }
             return false
         }), nil)
@@ -1649,8 +1654,9 @@ public func selectivePrivacySettingsController(
         presentControllerImpl?(UndoOverlayController(presentationData: presentationData, content: .premiumPaywall(title: nil, text: presentationData.strings.Privacy_Gifts_PremiumToast_Text, customUndoText: presentationData.strings.Privacy_Gifts_PremiumToast_Action, timeout: nil, linkAction: { _ in
         }), elevatedLayout: false, action: { action in
             if case .undo = action {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .readTime, forceDark: false, dismissed: nil)
-                pushControllerImpl?(controller, true)
+                if let controller = context.sharedContext.makePremiumIntroController(context: context, source: .readTime, forceDark: false, dismissed: nil) {
+                    pushControllerImpl?(controller, true)
+                }
             }
             return false
         }), nil)

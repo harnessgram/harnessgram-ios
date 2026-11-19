@@ -227,6 +227,7 @@ public final class HarnessgramLiveActivityController {
                 continue
             }
             let cardId = activity.attributes.cardId
+            guard !cardId.hasPrefix(HarnessgramSampleStore.activityIDPrefix) else { continue }
             if planned.contains(cardId) {
                 self.observe(activity)  // also activities from before a relaunch
                 let hasToken = activity.pushToken != nil
@@ -378,7 +379,7 @@ public final class HarnessgramLiveActivityController {
         self.observed = []
         self.firstSeen = [:]
         self.reportedMissing = []
-        for activity in Activity<HarnessgramTaskActivityAttributes>.activities {
+        for activity in Activity<HarnessgramTaskActivityAttributes>.activities where !activity.attributes.cardId.hasPrefix(HarnessgramSampleStore.activityIDPrefix) {
             Task {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }

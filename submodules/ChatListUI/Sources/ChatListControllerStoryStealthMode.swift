@@ -146,7 +146,9 @@ extension ChatListControllerImpl {
         let context = self.context
         var replaceImpl: ((ViewController) -> Void)?
         let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .stories, forceDark: false, action: {
-            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesStealthMode, forceDark: false, dismissed: nil)
+            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesStealthMode, forceDark: false, dismissed: nil) else {
+                return
+            }
             replaceImpl?(controller)
         }, dismissed: nil)
         replaceImpl = { [weak self, weak controller] c in

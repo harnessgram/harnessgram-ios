@@ -184,12 +184,14 @@ final class CreateBotContentComponent: Component {
             guard let component = self.component, let environment = self.environment else {
                 return
             }
-            let controller = component.context.sharedContext.makePremiumIntroController(
+            guard let controller = component.context.sharedContext.makePremiumIntroController(
                 context: component.context,
                 source: .settings,
                 forceDark: false,
                 dismissed: nil
-            )
+            ) else {
+                return
+            }
             environment.controller()?.push(controller)
         }
 

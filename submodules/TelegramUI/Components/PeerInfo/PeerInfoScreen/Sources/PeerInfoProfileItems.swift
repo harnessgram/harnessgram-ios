@@ -233,18 +233,19 @@ func infoItems(
             if let birthday = cachedData.birthday {
                 let isBirthdayToday = hasBirthdayToday(birthday: birthday)
                 
+                let canSendGift = PremiumConfiguration.allowsPurchases && isBirthdayToday && cachedData.disallowedGifts != TelegramDisallowedGifts.All
                 var birthdayAction: ((ASDisplayNode, Promise<Bool>?) -> Void)?
                 if isMyProfile {
                     birthdayAction = { node, _ in
                         birthdayContextAction(node, nil, nil)
                     }
-                } else if isBirthdayToday && cachedData.disallowedGifts != TelegramDisallowedGifts.All {
+                } else if canSendGift {
                     birthdayAction = { _, _ in
                         interaction.openPremiumGift()
                     }
                 }
                 
-                items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: ItemBirthdate, context: context, label: isBirthdayToday ? presentationData.strings.UserInfo_BirthdayToday : presentationData.strings.UserInfo_Birthday, text: stringForCompactBirthday(birthday, strings: presentationData.strings, showAge: true), textColor: .primary, leftIcon: isBirthdayToday ? .birthday : nil, icon: isBirthdayToday ? .premiumGift : nil, action: birthdayAction, longTapAction: nil, iconAction: {
+                items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: ItemBirthdate, context: context, label: isBirthdayToday ? presentationData.strings.UserInfo_BirthdayToday : presentationData.strings.UserInfo_Birthday, text: stringForCompactBirthday(birthday, strings: presentationData.strings, showAge: true), textColor: .primary, leftIcon: isBirthdayToday ? .birthday : nil, icon: canSendGift ? .premiumGift : nil, action: birthdayAction, longTapAction: nil, iconAction: {
                     interaction.openPremiumGift()
                 }, contextAction: birthdayContextAction, requestLayout: { _ in
                 }))

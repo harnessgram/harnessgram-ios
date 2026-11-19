@@ -3277,7 +3277,9 @@ public final class WebAppController: ViewController, AttachmentContainable {
                             if !context.isPremium {
                                 var replaceImpl: ((ViewController) -> Void)?
                                 let demoController = context.sharedContext.makePremiumDemoController(context: context, subject: .emojiStatus, forceDark: false, action: {
-                                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil)
+                                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil) else {
+                                        return
+                                    }
                                     replaceImpl?(controller)
                                 }, dismissed: nil)
                                 replaceImpl = { [weak demoController] c in
@@ -3368,7 +3370,9 @@ public final class WebAppController: ViewController, AttachmentContainable {
                             if !context.isPremium {
                                 var replaceImpl: ((ViewController) -> Void)?
                                 let demoController = context.sharedContext.makePremiumDemoController(context: context, subject: .emojiStatus, forceDark: false, action: {
-                                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil)
+                                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .animatedEmoji, forceDark: false, dismissed: nil) else {
+                                        return
+                                    }
                                     replaceImpl?(controller)
                                 }, dismissed: nil)
                                 replaceImpl = { [weak demoController] c in

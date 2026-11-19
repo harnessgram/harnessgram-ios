@@ -18,11 +18,47 @@ spec.loader.exec_module(config)
 class LocalConfigTests(unittest.TestCase):
     def test_public_defaults_are_empty_and_have_no_endpoints(self):
         default = json.loads(DEFAULT.read_text())
+        config.validate_public_defaults(default)
         result = config.merge_config(default, {})
         self.assertEqual(result["agentProjectGroups"], [])
         self.assertEqual(result["peerIds"], [])
         self.assertEqual(result["usernames"], [])
-        self.assertTrue(config.KEYS.isdisjoint(result.keys() - {"agentProjectGroups"}))
+
+    def test_generator_preserves_new_empty_fields_in_committed_defaults(self):
+        default = json.loads(DEFAULT.read_text(encoding="utf-8"))
+        default.update(bridgeHostSuffixes=[], futureApprovalList=[], futureApprovalMap={})
+        with tempfile.TemporaryDirectory() as directory:
+            public = Path(directory) / "defaults.json"
+            output = Path(directory) / "approved.json"
+            public.write_text(json.dumps(default), encoding="utf-8")
+            subprocess.run([sys.executable, str(SCRIPT), "--default", str(public), "--output", str(output)], check=True)
+            self.assertEqual(json.loads(output.read_text(encoding="utf-8")), default)
+
+    def test_committed_defaults_require_existing_fields_with_their_expected_types(self):
+        default = json.loads(DEFAULT.read_text(encoding="utf-8"))
+        for invalid in ([], {**default, "usernames": {}}, {**default, "mediaLevels": []}):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                config.validate_public_defaults(invalid)
+        del default["agentProjectGroups"]
+        with self.assertRaises(ValueError):
+            config.validate_public_defaults(default)
+
+    def test_generator_rejects_private_values_in_committed_defaults(self):
+        default = json.loads(DEFAULT.read_text(encoding="utf-8"))
+        for field, value in {
+            "relayHost": "mac.example-tailnet.ts.net",
+            "relayPort": 1080,
+            "bridgeBotUsername": "ExamplePersonalBot",
+            "bridgeHostSuffixes": [".example-tailnet.ts.net"],
+            "usernames": ["ExamplePersonalUser"],
+            "peerIds": ["-100900000001"],
+            "agentProjectGroups": ["-100900000001"],
+            "futurePublicList": ["ExamplePersonalUser"],
+            "futurePublicMap": {"ExamplePersonalUser": []},
+            "futurePublicScalar": "ExamplePersonalUser",
+        }.items():
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                config.validate_public_defaults({**default, field: value})
 
     def test_optional_override_is_merged_without_editing_public_source(self):
         original = DEFAULT.read_bytes()

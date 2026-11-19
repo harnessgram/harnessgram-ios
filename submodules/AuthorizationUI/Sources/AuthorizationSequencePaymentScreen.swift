@@ -112,6 +112,9 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
         }
         
         private func proceed() {
+            guard PremiumConfiguration.allowsPurchases else {
+                return
+            }
             guard let component = self.component, let storeProduct = self.products.first(where: { $0.id == component.storeProduct }), !self.inProgress else {
                 return
             }
@@ -382,7 +385,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                             guard let self, let controller = self.environment?.controller(), let product = self.products.first(where: { $0.id == component.storeProduct }) else {
                                 return
                             }
-                            let introController = component.sharedContext.makePremiumIntroController(
+                            guard let introController = component.sharedContext.makePremiumIntroController(
                                 sharedContext: component.sharedContext,
                                 engine: component.engine,
                                 inAppPurchaseManager: component.inAppPurchaseManager,
@@ -390,7 +393,9 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                                 proceed: { [weak self] in
                                     self?.proceed()
                                 }
-                            )
+                            ) else {
+                                return
+                            }
                             controller.push(introController)
                         }
                     ))
@@ -498,6 +503,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                 containerSize: CGSize(width: availableSize.width - buttonBandInset - 30.0 * 2.0, height: buttonHeight)
             )
             if let buttonView = self.button.view {
+                buttonView.isHidden = !PremiumConfiguration.allowsPurchases
                 if buttonView.superview == nil {
                     self.addSubview(buttonView)
                 }

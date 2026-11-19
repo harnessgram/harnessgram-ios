@@ -928,7 +928,9 @@ final class TextProcessingContentComponent: Component {
                                     let context = component.context
                                     var replaceImpl: ((ViewController) -> Void)?
                                     let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .aiTools, forceDark: false, action: {
-                                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesStealthMode, forceDark: false, dismissed: nil)
+                                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesStealthMode, forceDark: false, dismissed: nil) else {
+                                            return
+                                        }
                                         replaceImpl?(controller)
                                     }, dismissed: nil)
                                     replaceImpl = { [weak self, weak controller] c in
@@ -1570,7 +1572,9 @@ private final class TextProcessingSheetComponent: Component {
                     let context = component.context
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = component.context.sharedContext.makePremiumDemoController(context: component.context, subject: .aiTools, forceDark: false, action: {
-                        let controller = component.context.sharedContext.makePremiumIntroController(context: context, source: .aiTools, forceDark: false, dismissed: nil)
+                        guard let controller = component.context.sharedContext.makePremiumIntroController(context: context, source: .aiTools, forceDark: false, dismissed: nil) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     }, dismissed: nil)
                     replaceImpl = { [weak controller] c in

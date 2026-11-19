@@ -27,6 +27,7 @@ private struct HarnessgramTodayEntry: TimelineEntry {
     let today: HarnessgramCockpitSnapshot.Today
     let bridgeOrigin: URL?
     var needsPairing: Bool = false
+    var isSample: Bool = false
 
     static let preview = HarnessgramTodayEntry(date: HarnessgramCockpitSnapshot.sample.updatedAt, today: .init(
         doneToday: 4,
@@ -46,11 +47,15 @@ private struct HarnessgramTodayProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (HarnessgramTodayEntry) -> Void) {
-        completion(context.isPreview ? .preview : self.readSnapshot())
+        completion(context.isPreview ? .preview : self.sampleEntry() ?? self.readSnapshot())
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<HarnessgramTodayEntry>) -> Void) {
         Task {
+            if let sample = self.sampleEntry() {
+                completion(Timeline(entries: [sample], policy: .after(sample.date.addingTimeInterval(15 * 60))))
+                return
+            }
             // The same bounded refresh as "ממתין לך" (one read of the bridge while the app's login can still read, saved
             // only in the same session), so a reload asked by a bridge notification shows fresh numbers, not the copy
             // the app saved last time it was open.
@@ -60,6 +65,11 @@ private struct HarnessgramTodayProvider: TimelineProvider {
             entry.needsPairing = needsPairing
             completion(Timeline(entries: [entry], policy: .after(entry.date.addingTimeInterval(15 * 60))))
         }
+    }
+
+    private func sampleEntry() -> HarnessgramTodayEntry? {
+        guard let sample = HarnessgramSampleStore.shared?.read() else { return nil }
+        return HarnessgramTodayEntry(date: Date(), today: sample.snapshot.today ?? .empty, bridgeOrigin: nil, isSample: true)
     }
 
     private func readSnapshot() -> HarnessgramTodayEntry {
@@ -74,7 +84,7 @@ private struct HarnessgramTodayEntryView: View {
     let entry: HarnessgramTodayEntry
 
     var body: some View {
-        let model = HarnessgramTodayViewModel(today: self.entry.today, strings: .init(), bridgeOrigin: self.entry.bridgeOrigin, needsPairing: self.entry.needsPairing)
+        let model = HarnessgramTodayViewModel(today: self.entry.today, strings: .init(), bridgeOrigin: self.entry.bridgeOrigin, needsPairing: self.entry.needsPairing, isSample: self.entry.isSample)
         HarnessgramTodayContent(model: model, family: self.family)
     }
 }

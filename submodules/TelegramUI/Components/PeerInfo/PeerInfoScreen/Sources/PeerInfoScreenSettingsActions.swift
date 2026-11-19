@@ -157,7 +157,9 @@ extension PeerInfoScreenNode {
         case .language:
             push(LocalizationListController(context: self.context))
         case .premium:
-            let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .settings, forceDark: false, dismissed: nil)
+            guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .settings, forceDark: false, dismissed: nil) else {
+                return
+            }
             self.controller?.push(controller)
         case .premiumGift:
             guard let controller = self.controller, !controller.presentAccountFrozenInfoIfNeeded() else {
@@ -169,7 +171,9 @@ extension PeerInfoScreenNode {
                 guard let self else {
                     return
                 }
-                let giftsController = self.context.sharedContext.makePremiumGiftController(context: self.context, source: .settings(birthdays), completion: nil)
+                guard let giftsController = self.context.sharedContext.makePremiumGiftController(context: self.context, source: .settings(birthdays), completion: nil) else {
+                    return
+                }
                 self.controller?.push(giftsController)
             })
         case .stickers:
@@ -245,7 +249,9 @@ extension PeerInfoScreenNode {
                 if count >= maximumAvailableAccounts {
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = PremiumLimitScreen(context: strongSelf.context, subject: .accounts, count: Int32(count), action: {
-                        let controller = PremiumIntroScreen(context: strongSelf.context, source: .accounts)
+                        guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .accounts) else {
+                            return false
+                        }
                         replaceImpl?(controller)
                         return true
                     })
@@ -286,7 +292,9 @@ extension PeerInfoScreenNode {
             guard let controller = self.controller, !controller.presentAccountFrozenInfoIfNeeded() else {
                 return
             }
-            push(self.context.sharedContext.makeBusinessSetupScreen(context: self.context))
+            if let purchaseController = self.context.sharedContext.makeBusinessSetupScreen(context: self.context) {
+                push(purchaseController)
+            }
         case .premiumManagement:
             guard let controller = self.controller else {
                 return

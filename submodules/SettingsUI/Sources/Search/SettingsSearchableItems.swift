@@ -557,7 +557,9 @@ private func premiumSearchableItems(context: AccountContext) -> [SettingsSearcha
             icon: icon,
             breadcrumbs: [],
             present: { context, _, present in
-                present(.push, PremiumIntroScreen(context: context, source: .settings, modal: false))
+                if let purchaseController = PremiumIntroScreen(context: context, source: .settings, modal: false) {
+                    present(.push, purchaseController)
+                }
             }
         )
     )
@@ -565,7 +567,9 @@ private func premiumSearchableItems(context: AccountContext) -> [SettingsSearcha
     let presentDemo: (PremiumDemoScreen.Subject, (SettingsSearchableItemPresentation, ViewController?) -> Void) -> Void = { subject, present in
         var replaceImpl: ((ViewController) -> Void)?
         let controller = PremiumDemoScreen(context: context, subject: subject, action: {
-            let controller = PremiumIntroScreen(context: context, source: .settings, modal: false)
+            guard let controller = PremiumIntroScreen(context: context, source: .settings, modal: false) else {
+                return
+            }
             replaceImpl?(controller)
         })
         replaceImpl = { [weak controller] c in
@@ -762,7 +766,9 @@ private func premiumSearchableItems(context: AccountContext) -> [SettingsSearcha
             icon: .business,
             breadcrumbs: [],
             present: { context, _, present in
-                present(.push, PremiumIntroScreen(context: context, mode: .business, source: .settings, modal: false))
+                if let purchaseController = PremiumIntroScreen(context: context, mode: .business, source: .settings, modal: false) {
+                    present(.push, purchaseController)
+                }
             }
         )
     )
@@ -774,7 +780,9 @@ private func premiumSearchableItems(context: AccountContext) -> [SettingsSearcha
             icon: .business,
             breadcrumbs: [strings.Settings_Business],
             present: { context, _, present in
-                present(.push, PremiumIntroScreen(context: context, mode: .business, source: .settings, modal: false, focusOnItemTag: .doNotHideAds))
+                if let purchaseController = PremiumIntroScreen(context: context, mode: .business, source: .settings, modal: false, focusOnItemTag: .doNotHideAds) {
+                    present(.push, purchaseController)
+                }
             }
         )
     )
@@ -833,11 +841,11 @@ private func premiumSearchableItems(context: AccountContext) -> [SettingsSearcha
                     guard let starsContext = context.starsContext else {
                         return
                     }
-                    let controller = context.sharedContext.makeStarsGiftController(context: context, birthdays: birthdays, completion: { [weak navigationController] peerIds in
+                    guard let controller = context.sharedContext.makeStarsGiftController(context: context, birthdays: birthdays, completion: { [weak navigationController] peerIds in
                         guard let peerId = peerIds.first else {
                             return
                         }
-                        let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
+                        guard let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
                             context: context,
                             starsContext: starsContext,
                             options: options,
@@ -882,9 +890,13 @@ private func premiumSearchableItems(context: AccountContext) -> [SettingsSearcha
                                     present(.immediate, resultController)
                                 }
                             }
-                        )
+                        ) else {
+                            return
+                        }
                         present(.push, purchaseController)
-                    })
+                    }) else {
+                        return
+                    }
                     present(.push, controller)
                 })
             }
@@ -962,7 +974,19 @@ private func premiumSearchableItems(context: AccountContext) -> [SettingsSearcha
         )
     )
    
-    return items
+    if PremiumConfiguration.allowsPurchases {
+        return items
+    }
+    return items.filter { item in
+        switch item.id.base as? String {
+        case "ton", "stars/stats", "stars/earn":
+            return true
+        case "business", "business/do-not-hide-ads":
+            return context.isPremium
+        default:
+            return false
+        }
+    }
 }
 
 private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearchableItem] {
@@ -1307,7 +1331,9 @@ private func chatFoldersSearchableItems(context: AccountContext) -> [SettingsSea
                     } else if filters.count >= limit && !isPremium {
                         var replaceImpl: ((ViewController) -> Void)?
                         let controller = PremiumLimitScreen(context: context, subject: .folders, count: Int32(filters.count), action: {
-                            let controller = PremiumIntroScreen(context: context, source: .folders)
+                            guard let controller = PremiumIntroScreen(context: context, source: .folders) else {
+                                return false
+                            }
                             replaceImpl?(controller)
                             return true
                         })

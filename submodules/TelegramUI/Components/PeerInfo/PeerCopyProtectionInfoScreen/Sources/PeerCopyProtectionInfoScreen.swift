@@ -273,7 +273,9 @@ private final class PeerCopyProtectionInfoSheetContent: CombinedComponent {
                                 controller.completion?()
                             } else if let navigationController = controller.navigationController as? NavigationController {
                                 controller.dismissAnimated()
-                                let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .presence, forceDark: false, dismissed: nil)
+                                guard let controller = component.context.sharedContext.makePremiumIntroController(context: component.context, source: .presence, forceDark: false, dismissed: nil) else {
+                                    return
+                                }
                                 navigationController.pushViewController(controller)
                             }
                         }
@@ -469,7 +471,9 @@ public final class PeerCopyProtectionInfoScreen: ViewControllerComponentContaine
                         }
                         if case .info = action, let navigationController = self.navigationController as? NavigationController {
                             self.dismissAnimated()
-                            let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .presence, forceDark: false, dismissed: nil)
+                            guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .presence, forceDark: false, dismissed: nil) else {
+                                return false
+                            }
                             navigationController.pushViewController(controller)
                         }
                         return true

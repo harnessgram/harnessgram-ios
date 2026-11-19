@@ -202,6 +202,7 @@ final class HarnessgramSettingsModel: ObservableObject {
 }
 
 struct HarnessgramSettingsView: View {
+    @Environment(\.openURL) private var openURL
     @ObservedObject var model: HarnessgramSettingsModel
     @ObservedObject var radio: HarnessgramRadioPlayer
     let openRadio: () -> Void
@@ -226,6 +227,18 @@ struct HarnessgramSettingsView: View {
             self.connectionsSection
             Section(header: Text(HarnessgramFilterStrings.additionsTitle).textCase(nil)) {
                 HarnessgramLinkRow(icon: "square.stack.3d.up", tint: HarnessgramRowTint.cockpit, title: HarnessgramFilterStrings.additionsTitle, detail: self.t(.additionsRowDetail), action: self.openAdditions)
+            }
+            self.aboutSection
+        }
+    }
+
+    private var aboutSection: some View {
+        Section(header: Text(HarnessgramAboutStrings.title).textCase(nil)) {
+            HarnessgramLinkRow(icon: "chevron.left.forwardslash.chevron.right", tint: HarnessgramRowTint.neutral, title: HarnessgramAboutStrings.source, detail: HarnessgramAboutStrings.sourceDetail, action: {
+                self.openURL(HarnessgramAboutStrings.sourceURL)
+            })
+            HarnessgramCustomRow(icon: "info.circle", tint: HarnessgramRowTint.neutral, title: HarnessgramAboutStrings.independence, detail: HarnessgramAboutStrings.license) {
+                EmptyView()
             }
         }
     }

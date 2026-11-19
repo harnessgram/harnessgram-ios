@@ -1588,7 +1588,9 @@ public final class ChatListNode: ListViewImpl {
                         case let .limitReached(count):
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = PremiumLimitScreen(context: context, subject: .pinnedSavedPeers, count: Int32(count), action: {
-                                let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats)
+                                guard let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats) else {
+                                    return false
+                                }
                                 replaceImpl?(premiumScreen)
                                 return true
                             })
@@ -1641,7 +1643,9 @@ public final class ChatListNode: ListViewImpl {
                                     if case .filter = location {
                                         var replaceImpl: ((ViewController) -> Void)?
                                         let controller = PremiumLimitScreen(context: context, subject: .chatsPerFolder, count: Int32(count), action: {
-                                            let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats)
+                                            guard let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats) else {
+                                                return false
+                                            }
                                             replaceImpl?(premiumScreen)
                                             return true
                                         })
@@ -1652,7 +1656,9 @@ public final class ChatListNode: ListViewImpl {
                                     } else {
                                         var replaceImpl: ((ViewController) -> Void)?
                                         let controller = PremiumLimitScreen(context: context, subject: .pins, count: Int32(count), action: {
-                                            let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats)
+                                            guard let premiumScreen = PremiumIntroScreen(context: context, source: .pinnedChats) else {
+                                                return false
+                                            }
                                             replaceImpl?(premiumScreen)
                                             return true
                                         })
@@ -1789,7 +1795,9 @@ public final class ChatListNode: ListViewImpl {
                     let _ = self.context.engine.notices.dismissServerProvidedSuggestion(suggestion: ServerProvidedSuggestion.restorePremium.id).startStandalone()
                 }
             }
-            let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .ads, forceDark: false, dismissed: nil)
+            guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .ads, forceDark: false, dismissed: nil) else {
+                return
+            }
             self.push?(controller)
         }, openPremiumGift: { [weak self] peers, birthdays in
             guard let self else {
@@ -1800,12 +1808,16 @@ public final class ChatListNode: ListViewImpl {
                 |> filter { !$0.isEmpty }
                 |> deliverOnMainQueue).start(next: { giftOptions in
                     let premiumOptions = giftOptions.filter { $0.users == 1 }.map { CachedPremiumGiftOption(months: $0.months, currency: $0.currency, amount: $0.amount, botUrl: "", storeProductId: $0.storeProductId) }
-                    let controller = self.context.sharedContext.makeGiftOptionsController(context: self.context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: true, completion: nil)
+                    guard let controller = self.context.sharedContext.makeGiftOptionsController(context: self.context, peerId: peerId, premiumOptions: premiumOptions, hasBirthday: true, completion: nil) else {
+                        return
+                    }
                     controller.navigationPresentation = .modal
                     self.push?(controller)
                 })
             } else {
-                let controller = self.context.sharedContext.makePremiumGiftController(context: self.context, source: .chatList(birthdays), completion: nil)
+                guard let controller = self.context.sharedContext.makePremiumGiftController(context: self.context, source: .chatList(birthdays), completion: nil) else {
+                    return
+                }
                 controller.navigationPresentation = .modal
                 self.push?(controller)
             }

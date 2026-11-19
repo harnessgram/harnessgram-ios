@@ -393,7 +393,9 @@ public final class ChatMessageInteractiveFileNode: ASDisplayNode {
                         if case .undo = action {
                             var replaceImpl: ((ViewController) -> Void)?
                             let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .voiceToText, forceDark: false, action: {
-                                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil)
+                                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil) else {
+                                    return
+                                }
                                 replaceImpl?(controller)
                             }, dismissed: nil)
                             replaceImpl = { [weak controller] c in
@@ -560,7 +562,9 @@ public final class ChatMessageInteractiveFileNode: ASDisplayNode {
             if case .info = action {
                 var replaceImpl: ((ViewController) -> Void)?
                 let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .voiceToText, forceDark: false, action: {
-                    let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil)
+                    guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .settings, forceDark: false, dismissed: nil) else {
+                        return
+                    }
                     replaceImpl?(controller)
                 }, dismissed: nil)
                 replaceImpl = { [weak controller] c in

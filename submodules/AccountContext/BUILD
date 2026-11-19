@@ -22,6 +22,7 @@ swift_library(
         "//submodules/MusicAlbumArtResources:MusicAlbumArtResources",
         "//submodules/Utils/RangeSet:RangeSet",
         "//submodules/InAppPurchaseManager:InAppPurchaseManager",
+        "//submodules/HarnessgramSettings:HarnessgramSettings",
         "//submodules/TextFormat:TextFormat",
         "//submodules/TelegramUI/Components/AnimationCache:AnimationCache",
         "//submodules/TelegramUI/Components/MultiAnimationRenderer:MultiAnimationRenderer",

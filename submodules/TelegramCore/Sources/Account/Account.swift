@@ -196,24 +196,8 @@ public class UnauthorizedAccount {
             }
         })
         
-        // The Rust engine makes and binds its own temporary keys, so only the permanent keys are made
-        // ahead (by the engine, over whatever route works); MtProtoKit's temporary keys would only add
-        // TCP connections on a network that blocks it.
-        let prefetchedSelector: MTDatacenterAuthInfoSelector = network.engineKind == .rust ? .persistent : .ephemeralMain
-        network.context.performBatchUpdates({
-            var datacenterIds: [Int] = [1, 2]
-            if testingEnvironment {
-                datacenterIds = [3]
-            } else {
-                datacenterIds.append(contentsOf: [4])
-            }
-            for id in datacenterIds {
-                if network.context.authInfoForDatacenter(withId: id, selector: .persistent) == nil {
-                    network.context.authInfoForDatacenter(withIdRequired: id, isCdn: false, selector: prefetchedSelector, allowUnboundEphemeralKeys: false)
-                }
-            }
-            network.context.beginExplicitBackupAddressDiscovery()
-        })
+        self.prepareLoginConnection()
+        network.context.beginExplicitBackupAddressDiscovery()
         
         // Nothing is authorized yet, so a permanent key the server no longer knows is replaced rather than
         // logging anything out. Only with the Rust engine, whose logout check reaches the server over any
@@ -258,6 +242,26 @@ public class UnauthorizedAccount {
     deinit {
         self.proxySettingsDisposable.dispose()
         self.networkEngineStateDisposable.dispose()
+    }
+
+    /// The welcome screen stops both its main session and the separate login bootstrap while the offline sample is open.
+    public func setLoginConnectionPreparationPaused(_ paused: Bool) {
+        self.network.context.setConnectionPreparationPaused(paused)
+        if !paused {
+            self.prepareLoginConnection()
+        }
+    }
+
+    private func prepareLoginConnection() {
+        let network = self.network
+        // Rust makes and binds its own temporary keys, so only prefetch permanent keys with that engine.
+        let selector: MTDatacenterAuthInfoSelector = network.engineKind == .rust ? .persistent : .ephemeralMain
+        let datacenterIds = self.testingEnvironment ? [3] : [1, 2, 4]
+        network.context.performBatchUpdates {
+            for id in datacenterIds where network.context.authInfoForDatacenter(withId: id, selector: .persistent) == nil {
+                network.context.authInfoForDatacenter(withIdRequired: id, isCdn: false, selector: selector, allowUnboundEphemeralKeys: false)
+            }
+        }
     }
     
     public func changedMasterDatacenterId(accountManager: AccountManager<TelegramAccountManagerTypes>, masterDatacenterId: Int32) -> Signal<UnauthorizedAccount, NoError> {
@@ -1508,7 +1512,6 @@ public class Account {
         if !supplementary {
             self.managedOperationsDisposable.add(harnessgramCaptureInitialMembership(postbox: postbox, network: network, accountPeerId: peerId).start())
             self.managedOperationsDisposable.add(harnessgramCaptureInstalledStickerPacks(network: network).start())
-            self.managedOperationsDisposable.add(harnessgramEnforceSensitiveContentFilter(postbox: postbox, network: network).start())
             self.managedOperationsDisposable.add(harnessgramTrackContacts(postbox: postbox, accountPeerId: peerId).start())
             self.managedOperationsDisposable.add(harnessgramEnforceStrangerPrivacy(account: self).start())
         }

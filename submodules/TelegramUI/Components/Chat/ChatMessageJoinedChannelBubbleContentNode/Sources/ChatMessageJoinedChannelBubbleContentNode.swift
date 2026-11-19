@@ -350,7 +350,9 @@ public class ChatMessageJoinedChannelBubbleContentNode: ChatMessageBubbleContent
                                 action: { [weak self] action in
                                     if case .info = action {
                                         if let self, let item = self.item {
-                                            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil)
+                                            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: false, dismissed: nil) else {
+                                                return false
+                                            }
                                             item.controllerInteraction.navigationController()?.pushViewController(controller)
                                         }
                                     }

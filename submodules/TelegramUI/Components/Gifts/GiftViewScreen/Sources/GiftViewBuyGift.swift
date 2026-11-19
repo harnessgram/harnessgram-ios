@@ -24,6 +24,9 @@ public func buyStarGiftImpl(
     updateIsBalanceVisible: @escaping (Bool) -> Void,
     completion: @escaping () -> Void
 ) {
+    guard PremiumConfiguration.allowsPurchases else {
+        return
+    }
     let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                     
     let action: (CurrencyAmount.Currency, GiftMessageScreen.Result, @escaping () -> Void) -> Void = { currency, message, beforeCompletion in
@@ -157,7 +160,7 @@ public func buyStarGiftImpl(
                 guard let controller = getController() else {
                     return
                 }
-                let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
+                guard let purchaseController = context.sharedContext.makeStarsPurchaseScreen(
                     context: context,
                     starsContext: starsContext,
                     options: options ?? [],
@@ -201,7 +204,9 @@ public func buyStarGiftImpl(
                             });
                         })
                     }
-                )
+                ) else {
+                    return
+                }
                 controller.push(purchaseController)
             })
         } else if finalPrice.currency == .ton, let tonState = context.tonContext?.currentState, tonState.balance < finalPrice.amount {

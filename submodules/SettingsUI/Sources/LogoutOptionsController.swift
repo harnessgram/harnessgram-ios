@@ -159,7 +159,9 @@ public func logoutOptionsController(context: AccountContext, navigationControlle
             if count >= maximumAvailableAccounts {
                 var replaceImpl: ((ViewController) -> Void)?
                 let controller = PremiumLimitScreen(context: context, subject: .accounts, count: Int32(count), action: {
-                    let controller = PremiumIntroScreen(context: context, source: .accounts)
+                    guard let controller = PremiumIntroScreen(context: context, source: .accounts) else {
+                        return false
+                    }
                     replaceImpl?(controller)
                     return true
                 })

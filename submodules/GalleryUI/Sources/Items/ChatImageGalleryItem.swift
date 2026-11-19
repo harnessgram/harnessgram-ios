@@ -634,7 +634,9 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                 c?.dismiss(completion: {
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .noAds, forceDark: true, action: {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: true, dismissed: nil)
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: true, dismissed: nil) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     }, dismissed: nil)
                     replaceImpl = { [weak controller] c in
@@ -663,7 +665,9 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                     c?.dismiss(completion: {
                         var replaceImpl: ((ViewController) -> Void)?
                         let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .noAds, forceDark: true, action: {
-                            let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: true, dismissed: nil)
+                            guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .ads, forceDark: true, dismissed: nil) else {
+                                return
+                            }
                             replaceImpl?(controller)
                         }, dismissed: nil)
                         replaceImpl = { [weak controller] c in

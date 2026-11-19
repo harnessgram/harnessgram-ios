@@ -1600,6 +1600,9 @@ public final class StarsSubscriptionsContext {
 
 
 func _internal_sendStarsPaymentForm(account: Account, formId: Int64, source: BotPaymentInvoiceSource) -> Signal<SendBotPaymentResult, SendBotPaymentFormError> {
+    guard source.isAllowedByPurchasePolicy else {
+        return .fail(.generic)
+    }
     return account.postbox.transaction { transaction -> Api.InputInvoice? in
         return _internal_parseInputInvoice(transaction: transaction, source: source)
     }

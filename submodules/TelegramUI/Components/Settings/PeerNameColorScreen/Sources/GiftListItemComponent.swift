@@ -51,7 +51,7 @@ final class GiftListItemComponent: Component {
         self.strings = strings
         self.subject = subject
         self.gifts = gifts
-        self.starGifts = starGifts
+        self.starGifts = PremiumConfiguration.allowsPurchases ? starGifts : []
         self.selectedId = selectedId
         self.selectionUpdated = selectionUpdated
         self.onTabChange = onTabChange
@@ -347,7 +347,7 @@ final class GiftListItemComponent: Component {
                     buttonAttributedString.addAttribute(.attachment, value: chevronImage, range: NSRange(range, in: buttonAttributedString.string))
                 }
                 
-                let emptyResultsActionSize = self.emptyResultsAction.update(
+                let emptyResultsActionSize = PremiumConfiguration.allowsPurchases ? self.emptyResultsAction.update(
                     transition: .immediate,
                     component: AnyComponent(
                         PlainButtonComponent(
@@ -369,7 +369,7 @@ final class GiftListItemComponent: Component {
                     ),
                     environment: {},
                     containerSize: CGSize(width: availableSize.width - sideInset * 3.0, height: 50.0)
-                )
+                ) : .zero
       
                 let emptyTotalHeight = emptyResultsAnimationSize.height + emptyTextSpacing + emptyResultsTextSize.height + emptyTextSpacing + emptyResultsActionSize.height
                 let emptyAnimationY = topInset

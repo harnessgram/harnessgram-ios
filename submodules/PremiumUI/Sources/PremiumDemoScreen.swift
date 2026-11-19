@@ -1335,7 +1335,7 @@ private final class DemoSheetContent: CombinedComponent {
             
             let buttonText: String
             var buttonAnimationName: String?
-            if state.isPremium == true {
+            if !PremiumConfiguration.allowsPurchases || state.isPremium == true {
                 buttonText = strings.Common_OK
             } else {
                 switch component.source {
@@ -1445,7 +1445,7 @@ private final class DemoSheetContent: CombinedComponent {
                             return
                         }
                         component.dismiss()
-                        if let state = state, state.isPremium == false {
+                        if PremiumConfiguration.allowsPurchases, let state = state, state.isPremium == false {
                             component.action()
                         }
                     }

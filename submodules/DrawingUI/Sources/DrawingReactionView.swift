@@ -296,14 +296,18 @@ public class DrawingReactionEntityView: DrawingStickerEntityView {
                 
                 let controller = UndoOverlayController(presentationData: presentationData, content: .sticker(context: context, file: file, loop: true, title: nil, text: presentationData.strings.Story_Editor_TooltipPremiumReaction, undoText: nil, customAction: nil), elevatedLayout: true, animateInAsReplacement: false, appearance: UndoOverlayController.Appearance(isBlurred: true), action: { [weak self] action in
                     if case .info = action, let self {
-                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil)
+                        guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil) else {
+                            return false
+                        }
                         self.containerView?.push(controller)
                     }
                     return false
                 })
                 self.containerView?.present(controller)
             } else {
-                let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil)
+                guard let controller = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .storiesExpirationDurations, forceDark: true, dismissed: nil) else {
+                    return
+                }
                 self.containerView?.push(controller)
             }
         }

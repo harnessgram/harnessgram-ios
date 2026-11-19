@@ -484,9 +484,11 @@ extension ChatControllerImpl {
                                             return
                                         }
                                         
-                                        let purchaseScreen = strongSelf.context.sharedContext.makeStarsPurchaseScreen(context: strongSelf.context, starsContext: starsContext, options: options, purpose: .reactions(peerId: message.id.peerId, requiredStars: 1), targetPeerId: nil, customTheme: nil, completion: { result in
+                                        guard let purchaseScreen = strongSelf.context.sharedContext.makeStarsPurchaseScreen(context: strongSelf.context, starsContext: starsContext, options: options, purpose: .reactions(peerId: message.id.peerId, requiredStars: 1), targetPeerId: nil, customTheme: nil, completion: { result in
                                             let _ = result
-                                        })
+                                        }) else {
+                                            return
+                                        }
                                         strongSelf.push(purchaseScreen)
                                     })
                                 })

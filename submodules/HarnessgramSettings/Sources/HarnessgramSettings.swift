@@ -8,6 +8,14 @@ import CoreGraphics
 /// Values live in the app group's defaults so the app and its extensions read one state. Defaults
 /// are in code; a missing value always means the default.
 public final class HarnessgramSettings {
+    /// Build capability. These Telegram products are unavailable for the HarnessGram bundle.
+    public static let telegramPurchasesEnabled = false
+
+    /// Server configuration can further restrict purchases in builds that offer them.
+    public static func allowsTelegramPurchases(serverAllowsPurchases: Bool = true) -> Bool {
+        return self.telegramPurchasesEnabled && serverAllowsPurchases
+    }
+
     public static let shared: HarnessgramSettings = {
         let settings = HarnessgramSettings(defaults: HarnessgramSettings.appGroupDefaults())
         // Build 23: one font for the app and the messages; earlier choices carry over once, before anything reads them.

@@ -3784,12 +3784,14 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 forceDark: true,
                 cancel: {},
                 action: {
-                    let controller = context.sharedContext.makePremiumIntroController(
+                    guard let controller = context.sharedContext.makePremiumIntroController(
                         context: context,
                         source: .stories,
                         forceDark: true,
                         dismissed: nil
-                    )
+                    ) else {
+                        return false
+                    }
                     replaceImpl?(controller)
                     return true
                 })

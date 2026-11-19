@@ -1,12 +1,14 @@
 /* Localized versions of Info.plist keys */
 
-"NSContactsUsageDescription" = "Telegram will continuously upload your contacts to its heavily encrypted cloud servers to let you connect with your friends across all your devices.";
-"NSLocationWhenInUseUsageDescription" = "When you send your location to your friends, Telegram needs access to show them a map.";
-"NSLocationAlwaysAndWhenInUseUsageDescription" = "When you choose to share your Live Location with friends in a chat, Telegram needs background access to your location to keep them updated for the duration of the live sharing.";
-"NSLocationAlwaysUsageDescription" = "When you choose to share your live location with friends in a chat, Telegram needs background access to your location to keep them updated for the duration of the live sharing. You also need this to send locations from an Apple Watch.";
-"NSCameraUsageDescription" = "We need this so that you can take and share photos and videos, as well as make video calls.";
-"NSPhotoLibraryUsageDescription" = "We need this so that you can share photos and videos from your photo library and save the ones you capture.";
-"NSPhotoLibraryAddUsageDescription" = "We need this so that you can save photos and videos to your photo library and save the ones you capture.";
-"NSMicrophoneUsageDescription" = "We need this so that you can record and share voice messages and videos with sound.";
-"NSSiriUsageDescription" = "You can use Siri to send messages.";
-"NSFaceIDUsageDescription" = "You can use Face ID to unlock the app.";
+"NSCameraUsageDescription" = "HarnessGram uses the camera to take photos and videos to share and to make video calls.";
+"NSContactsUsageDescription" = "If you enable contact sync, HarnessGram uploads your contacts to Telegram’s encrypted cloud so you can find friends who use the service.";
+"NSFaceIDUsageDescription" = "HarnessGram uses Face ID to unlock the app and confirm sensitive actions.";
+"NSLocationAlwaysUsageDescription" = "When you share your live location, HarnessGram updates it in the background until sharing ends.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "When you share your live location, HarnessGram updates it in the background until sharing ends.";
+"NSLocationWhenInUseUsageDescription" = "HarnessGram uses your location to show it on the map when you choose to share it in a chat.";
+"NSMicrophoneUsageDescription" = "HarnessGram uses the microphone for calls and to record voice messages and videos with sound.";
+"NSMotionUsageDescription" = "HarnessGram uses motion sensors to orient the camera and to support motion controls in mini apps you open.";
+"NSPhotoLibraryAddUsageDescription" = "HarnessGram saves photos and videos you select to your photo library.";
+"NSPhotoLibraryUsageDescription" = "HarnessGram lets you select photos and videos from your library to share.";
+"NSSiriUsageDescription" = "HarnessGram lets you use Siri to send messages.";
+"NSSpeechRecognitionUsageDescription" = "HarnessGram uses speech recognition to transcribe audio messages when you request it.";

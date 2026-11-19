@@ -44,13 +44,15 @@ public func premiumAlertController(
     let alertController = AlertScreen(
         context: context,
         content: content,
-        actions: [
+        actions: PremiumConfiguration.allowsPurchases ? [
             .init(title: strings.Common_Cancel),
             .init(title: strings.PremiumNeeded_Subscribe, type: .default, action: { [weak parentController] in
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .nameColor, forceDark: false, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .nameColor, forceDark: false, dismissed: nil) else {
+                    return
+                }
                 parentController?.push(controller)
             })
-        ]
+        ] : [.init(title: strings.Common_OK, type: .default)]
     )
     return alertController
 }

@@ -522,7 +522,7 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
                 
                 var hasAction = false
                 let premiumConfiguration = PremiumConfiguration.with(appConfiguration: self.context.currentAppConfiguration.with { $0 })
-                if !premiumConfiguration.isPremiumDisabled {
+                if !premiumConfiguration.isPremiumPurchaseDisabled {
                     hasAction = true
                 }
                 
@@ -532,7 +532,9 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
                         return false
                     }
                     if case .undo = action {
-                        let premiumController = PremiumIntroScreen(context: self.context, source: .settings)
+                        guard let premiumController = PremiumIntroScreen(context: self.context, source: .settings) else {
+                            return false
+                        }
                         self.push(premiumController)
                     }
                     return false

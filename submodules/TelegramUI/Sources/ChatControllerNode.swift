@@ -5210,7 +5210,9 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                             guard let self else {
                                 return
                             }
-                            let premiumController = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .richText, forceDark: false, dismissed: nil)
+                            guard let premiumController = self.context.sharedContext.makePremiumIntroController(context: self.context, source: .richText, forceDark: false, dismissed: nil) else {
+                                return
+                            }
                             self.controller?.push(premiumController)
                         }),
                         TextAlertAction(type: .genericAction, title: strings.RichText_SendWithoutFormatting, action: { [weak self] in
@@ -5296,7 +5298,9 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                     
                     var replaceImpl: ((ViewController) -> Void)?
                     let controller = PremiumDemoScreen(context: strongSelf.context, subject: .animatedEmoji, action: {
-                        let controller = PremiumIntroScreen(context: strongSelf.context, source: .animatedEmoji)
+                        guard let controller = PremiumIntroScreen(context: strongSelf.context, source: .animatedEmoji) else {
+                            return
+                        }
                         replaceImpl?(controller)
                     })
                     replaceImpl = { [weak controller] c in

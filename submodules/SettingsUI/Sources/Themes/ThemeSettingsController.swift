@@ -16,7 +16,6 @@ import WallpaperResources
 import AccountContext
 import ContextUI
 import UndoUI
-import PremiumUI
 import PeerNameColorScreen
 import ThemeCarouselItem
 import ThemeAccentColorScreen
@@ -546,23 +545,13 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
     
     let _ = context.engine.themes.wallpapers().start()
     
-    let currentAppIcon: PresentationAppIcon?
-    var appIcons = context.sharedContext.applicationBindings.getAvailableAlternateIcons()
-    if let alternateIconName = context.sharedContext.applicationBindings.getAlternateIconName() {
-        currentAppIcon = appIcons.filter { $0.name == alternateIconName }.first
-    } else {
-        currentAppIcon = appIcons.filter { $0.isDefault }.first
-    }
-    
-    let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
-    if premiumConfiguration.isPremiumDisabled || context.account.testingEnvironment {
-        appIcons = appIcons.filter { !$0.isPremium } 
-    }
-    
+    let appIcons = context.sharedContext.applicationBindings.getAvailableAlternateIcons()
+    let alternateIconName = context.sharedContext.applicationBindings.getAlternateIconName()
+    let currentAppIcon = appIcons.first(where: { $0.name == alternateIconName }) ?? appIcons.first(where: { $0.isDefault })
     let availableAppIcons: Signal<[PresentationAppIcon], NoError> = .single(appIcons)
     let currentAppIconName = ValuePromise<String?>()
-    currentAppIconName.set(currentAppIcon?.name ?? "Blue")
-    
+    currentAppIconName.set(currentAppIcon?.name)
+
     let cloudThemes = Promise<[TelegramTheme]>()
     let updatedCloudThemes = context.engine.themes.themes(accountManager: context.sharedContext.accountManager)
     cloudThemes.set(updatedCloudThemes)
@@ -650,23 +639,11 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
             return current.withUpdatedShowNextMediaOnTap(value)
         }).start()
     }, selectAppIcon: { icon in
-        let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
-        |> deliverOnMainQueue).start(next: { peer in
-            let isPremium = peer?.isPremium ?? false
-            if icon.isPremium && !isPremium {
-                var replaceImpl: ((ViewController) -> Void)?
-                let controller = PremiumDemoScreen(context: context, subject: .appIcons, source: .other, action: {
-                    let controller = PremiumIntroScreen(context: context, source: .appIcons)
-                    replaceImpl?(controller)
-                })
-                replaceImpl = { [weak controller] c in
-                    controller?.replace(with: c)
+        context.sharedContext.applicationBindings.requestSetAlternateIconName(icon.isDefault ? nil : icon.name, { success in
+            if success {
+                Queue.mainQueue().async {
+                    currentAppIconName.set(icon.name)
                 }
-                pushControllerImpl?(controller)
-            } else {
-                currentAppIconName.set(icon.name)
-                context.sharedContext.applicationBindings.requestSetAlternateIconName(icon.isDefault ? nil : icon.name, { _ in
-                })
             }
         })
     }, editTheme: { theme in

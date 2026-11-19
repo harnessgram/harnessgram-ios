@@ -478,7 +478,9 @@ public class WallpaperGalleryController: ViewController {
             let context = strongSelf.context
             var replaceImpl: ((ViewController) -> Void)?
             let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .wallpapers, forceDark: false, action: {
-                let controller = context.sharedContext.makePremiumIntroController(context: context, source: .wallpapers, forceDark: false, dismissed: nil)
+                guard let controller = context.sharedContext.makePremiumIntroController(context: context, source: .wallpapers, forceDark: false, dismissed: nil) else {
+                    return
+                }
                 replaceImpl?(controller)
             }, dismissed: nil)
             replaceImpl = { [weak controller] c in

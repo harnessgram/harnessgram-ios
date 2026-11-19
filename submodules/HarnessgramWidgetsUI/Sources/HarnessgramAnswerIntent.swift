@@ -27,6 +27,7 @@ public struct HarnessgramAnswerIntent: AppIntent {
     }
 
     public func perform() async throws -> some IntentResult {
+        // The answer runner validates the decision ID and current real session.
         _ = await HarnessgramWidgetAnswer.run(id: self.decisionId, choice: self.choice, store: .shared, client: HarnessgramCockpitClient(), now: Date())
         WidgetCenter.shared.reloadTimelines(ofKind: HarnessgramWidgetKind.waiting)
         return .result()

@@ -10,48 +10,52 @@ func _internal_updateGlobalPrivacySettings(account: Account) -> Signal<Never, No
         return .single(nil)
     }
     |> mapToSignal { result -> Signal<Never, NoError> in
-        return account.postbox.transaction { transaction -> Void in
-            guard let result = result else {
-                return
-            }
-            let globalSettings: GlobalPrivacySettings
-            switch result {
-            case let .globalPrivacySettings(globalPrivacySettingsData):
-                let (flags, nonContactPeersPaidStars, disallowedStarGifts) = (globalPrivacySettingsData.flags, globalPrivacySettingsData.noncontactPeersPaidStars, globalPrivacySettingsData.disallowedGifts)
-                let automaticallyArchiveAndMuteNonContacts = (flags & (1 << 0)) != 0
-                let keepArchivedUnmuted = (flags & (1 << 1)) != 0
-                let keepArchivedFolders = (flags & (1 << 2)) != 0
-                let hideReadTime = (flags & (1 << 3)) != 0
-                let nonContactChatsRequirePremium = (flags & (1 << 4)) != 0
-                let displayGiftButton = (flags & (1 << 7)) != 0
-                
-                let nonContactChatsPrivacy: GlobalPrivacySettings.NonContactChatsPrivacy
-                if let nonContactPeersPaidStars, nonContactPeersPaidStars > 0 {
-                    nonContactChatsPrivacy = .paidMessages(StarsAmount(value: nonContactPeersPaidStars, nanos: 0))
-                } else if nonContactChatsRequirePremium {
-                    nonContactChatsPrivacy = .requirePremium
-                } else {
-                    nonContactChatsPrivacy = .everybody
-                }
-                
-                let disallowedGifts = TelegramDisallowedGifts(apiDisallowedGifts: disallowedStarGifts)
-                
-                globalSettings = GlobalPrivacySettings(
-                    automaticallyArchiveAndMuteNonContacts: automaticallyArchiveAndMuteNonContacts,
-                    keepArchivedUnmuted: keepArchivedUnmuted,
-                    keepArchivedFolders: keepArchivedFolders,
-                    hideReadTime: hideReadTime,
-                    nonContactChatsPrivacy: nonContactChatsPrivacy,
-                    disallowedGifts: disallowedGifts,
-                    displayGiftButton: displayGiftButton
-                )
-            }
-            updateGlobalPrivacySettings(transaction: transaction, { _ in
-                return globalSettings
-            })
+        guard let result else {
+            return .complete()
         }
-        |> ignoreValues
+        return storeGlobalPrivacySettings(postbox: account.postbox, settings: result)
     }
+}
+
+func storeGlobalPrivacySettings(postbox: Postbox, settings: Api.GlobalPrivacySettings) -> Signal<Never, NoError> {
+    return postbox.transaction { transaction -> Void in
+        let globalSettings: GlobalPrivacySettings
+        switch settings {
+        case let .globalPrivacySettings(globalPrivacySettingsData):
+            let (flags, nonContactPeersPaidStars, disallowedStarGifts) = (globalPrivacySettingsData.flags, globalPrivacySettingsData.noncontactPeersPaidStars, globalPrivacySettingsData.disallowedGifts)
+            let automaticallyArchiveAndMuteNonContacts = (flags & (1 << 0)) != 0
+            let keepArchivedUnmuted = (flags & (1 << 1)) != 0
+            let keepArchivedFolders = (flags & (1 << 2)) != 0
+            let hideReadTime = (flags & (1 << 3)) != 0
+            let nonContactChatsRequirePremium = (flags & (1 << 4)) != 0
+            let displayGiftButton = (flags & (1 << 7)) != 0
+
+            let nonContactChatsPrivacy: GlobalPrivacySettings.NonContactChatsPrivacy
+            if let nonContactPeersPaidStars, nonContactPeersPaidStars > 0 {
+                nonContactChatsPrivacy = .paidMessages(StarsAmount(value: nonContactPeersPaidStars, nanos: 0))
+            } else if nonContactChatsRequirePremium {
+                nonContactChatsPrivacy = .requirePremium
+            } else {
+                nonContactChatsPrivacy = .everybody
+            }
+
+            let disallowedGifts = TelegramDisallowedGifts(apiDisallowedGifts: disallowedStarGifts)
+
+            globalSettings = GlobalPrivacySettings(
+                automaticallyArchiveAndMuteNonContacts: automaticallyArchiveAndMuteNonContacts,
+                keepArchivedUnmuted: keepArchivedUnmuted,
+                keepArchivedFolders: keepArchivedFolders,
+                hideReadTime: hideReadTime,
+                nonContactChatsPrivacy: nonContactChatsPrivacy,
+                disallowedGifts: disallowedGifts,
+                displayGiftButton: displayGiftButton
+            )
+        }
+        updateGlobalPrivacySettings(transaction: transaction, { _ in
+            return globalSettings
+        })
+    }
+    |> ignoreValues
 }
 
 func _internal_requestAccountPrivacySettings(account: Account) -> Signal<AccountPrivacySettings, NoError> {
