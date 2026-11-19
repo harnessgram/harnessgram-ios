@@ -1,0 +1,8 @@
+{
+  "images" : [
+    { "idiom" : "universal", "filename" : "life-bayit-card@2x.png", "scale" : "2x" },
+    { "idiom" : "universal", "filename" : "life-bayit-card@3x.png", "scale" : "3x" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 },
+  "properties" : { "compression-type" : "lossy" }
+}
