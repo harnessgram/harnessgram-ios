@@ -21,4 +21,12 @@ Follow Telegram-iOS's build instructions in `README.md`, with these differences:
 
 ## Licence and notices
 
-GPLv2. Upstream copyright and notices are kept as they are in the source files and `LICENSE`.
+The source code is licensed under the GNU General Public License, version 2 (see `LICENSE`), like Telegram-iOS, which
+it is based on. Upstream copyright and licence notices are kept as they are in the source files; bundled third-party
+libraries keep their own licences in their folders.
+
+## Name and logo
+
+The "HarnessGram" name and logo are not licensed under the GPL. You may build and share your own version of this
+code under the GPL, but give it a different name and icon, and do not present it as HarnessGram or as endorsed by it.
+"Telegram" is a trademark of its owner; this project is not affiliated with Telegram.
